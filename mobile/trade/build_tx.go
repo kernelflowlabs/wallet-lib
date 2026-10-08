@@ -43,7 +43,7 @@ func BuildTx(reqJSON string) string {
 		return buildTxViaServer(ctx, req.Channel, req.RouteId)
 	}
 	switch req.Channel {
-	case "bungee", "jupiter", "lifi", "univ2", "univ3":
+	case "bungee", "jupiter", "lifi", "univ2", "univ3", "bridgers":
 		return marshal(&buildTxResp{Error: fmt.Sprintf("channel %q builds inline in AutoQuote — read route.txData; no separate BuildTx needed", req.Channel)})
 	}
 	return marshal(&buildTxResp{Error: fmt.Sprintf("unknown channel: %q", req.Channel)})

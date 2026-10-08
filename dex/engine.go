@@ -2,6 +2,7 @@ package dex
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -35,6 +36,8 @@ type Candidate struct {
 	ToDecimals   int
 	LiquidityUsd float64
 	SourceIssuer string
+	FromCoinCode string
+	ToCoinCode   string
 }
 
 const (
@@ -67,6 +70,9 @@ type Request struct {
 	Private                 *bool
 	SimulatedQuotesRequired *bool
 	SolanaSponsorAddress    string
+	EquipmentNo             string
+	SourceType              string
+	FixedRateFlag           *int
 	ScamCheck               func(chain, token string) bool
 }
 
@@ -96,6 +102,7 @@ type Route struct {
 	EstSeconds      int64                 `json:"estSeconds,omitempty"`
 	RouteTags       []string              `json:"routeTags,omitempty"`
 	ExpiresAt       int64                 `json:"expiresAt,omitempty"`
+	SubmitRequest   json.RawMessage       `json:"submitRequest,omitempty"`
 	Warnings        []Warning             `json:"warnings,omitempty"`
 	Reason          string                `json:"reason,omitempty"`
 }
@@ -220,6 +227,11 @@ func (e *Engine) Quote(ctx context.Context, req *Request, cands []*Candidate, qu
 				Private:                 req.Private,
 				SimulatedQuotesRequired: req.SimulatedQuotesRequired,
 				SolanaSponsorAddress:    req.SolanaSponsorAddress,
+				EquipmentNo:             req.EquipmentNo,
+				SourceType:              req.SourceType,
+				FromCoinCode:            c.FromCoinCode,
+				ToCoinCode:              c.ToCoinCode,
+				FixedRateFlag:           req.FixedRateFlag,
 			}
 			out, err := quote(qctx, c, in)
 			results[i] = result{c, out, err}
@@ -298,6 +310,7 @@ func (e *Engine) Quote(ctx context.Context, req *Request, cands []*Candidate, qu
 			EstSeconds:      best.EstimatedTime,
 			RouteTags:       append([]string(nil), best.RouteTags...),
 			ExpiresAt:       best.ExpiresAt,
+			SubmitRequest:   append(json.RawMessage(nil), best.SubmitRequest...),
 			Warnings:        append([]Warning(nil), best.Warnings...),
 			Reason:          ReasonFor(r.cand, channel),
 		}

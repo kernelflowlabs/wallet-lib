@@ -4,19 +4,28 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/hex"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
+	"github.com/go-jose/go-jose/v4"
 	"golang.org/x/crypto/scrypt"
 )
 
 const (
-	cipherSaltSize = 32
-	cipherKeySize  = 32
-	cipherScryptN  = 32768
-	cipherScryptR  = 8
-	cipherScryptP  = 1
+	MaxJWEPublicKeyBytes = 16 * 1024
+	MaxJWEPlaintextBytes = 1024 * 1024
+	cipherSaltSize       = 32
+	cipherKeySize        = 32
+	cipherScryptN        = 32768
+	cipherScryptR        = 8
+	cipherScryptP        = 1
 )
 
 func EncryptText(clearText, password []byte) ([]byte, error) {
@@ -100,4 +109,39 @@ func DecryptText(cipherText, password []byte) ([]byte, error) {
 	}
 
 	return plaintext, nil
+}
+
+func EncryptJWE(publicKeyPEM, plaintext []byte) ([]byte, error) {
+	if len(publicKeyPEM) > MaxJWEPublicKeyBytes || len(plaintext) > MaxJWEPlaintextBytes {
+		return nil, errors.New("JWE input exceeds size limit")
+	}
+	if len(plaintext) == 0 {
+		return nil, errors.New("plaintext is empty")
+	}
+	block, rest := pem.Decode(publicKeyPEM)
+	if block == nil || block.Type != "PUBLIC KEY" || strings.TrimSpace(string(rest)) != "" {
+		return nil, errors.New("expected one PKIX public key")
+	}
+	parsed, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, errors.New("invalid public key")
+	}
+	key, ok := parsed.(*rsa.PublicKey)
+	if !ok || key.N == nil || key.N.BitLen() < 3072 || key.N.BitLen() > 8192 || key.E != 65537 {
+		return nil, errors.New("expected RSA public key of 3072 to 8192 bits with exponent 65537")
+	}
+	id := sha256.Sum256(block.Bytes)
+	enc, err := jose.NewEncrypter(jose.A256GCM, jose.Recipient{Algorithm: jose.RSA_OAEP_256, Key: key, KeyID: hex.EncodeToString(id[:])}, nil)
+	if err != nil {
+		return nil, err
+	}
+	object, err := enc.Encrypt(plaintext)
+	if err != nil {
+		return nil, err
+	}
+	compact, err := object.CompactSerialize()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(compact), nil
 }

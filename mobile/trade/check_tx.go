@@ -82,6 +82,12 @@ func CheckTx(reqJSON string) string {
 		out, err = autoQuoteBungee().Status(ctx, in)
 	case "lifi":
 		out, err = autoQuoteLiFi().Status(ctx, in)
+	case "bridgers":
+		client := autoQuoteBridgers()
+		if client == nil {
+			return marshal(&checkTxResp{Error: "bridgers is not configured — pass bridgers.source_flag to Init"})
+		}
+		out, err = client.Status(ctx, in)
 	case "univ2":
 		chain := req.FromChain
 		if chain == "" {

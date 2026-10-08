@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/kernelflowlabs/wallet-sdk/dex/bridgers"
 	"github.com/kernelflowlabs/wallet-sdk/dex/jupiter"
 	"github.com/kernelflowlabs/wallet-sdk/dex/univ2"
 	"github.com/kernelflowlabs/wallet-sdk/dex/univ3"
@@ -21,6 +22,7 @@ var (
 	server            string
 	bungeeAPIKey      string
 	bungeeAffiliateID string
+	bridgersConfig    *bridgers.Config
 )
 
 func Init(configJSON string) string {
@@ -28,14 +30,15 @@ func Init(configJSON string) string {
 	defer tradeInitMu.Unlock()
 
 	var cfg struct {
-		JupiterAPIKey     string         `json:"jupiter_api_key"`
-		SolanaRPC         string         `json:"solana_rpc"`
-		FeeAccount        string         `json:"fee_account"`
-		ServerURL         string         `json:"server_url"`
-		BungeeAPIKey      string         `json:"bungee_api_key"`
-		BungeeAffiliateID string         `json:"bungee_affiliate_id"`
-		Univ2             []univ2.Config `json:"univ2,omitempty"`
-		Univ3             []univ3.Config `json:"univ3,omitempty"`
+		JupiterAPIKey     string           `json:"jupiter_api_key"`
+		SolanaRPC         string           `json:"solana_rpc"`
+		FeeAccount        string           `json:"fee_account"`
+		ServerURL         string           `json:"server_url"`
+		BungeeAPIKey      string           `json:"bungee_api_key"`
+		BungeeAffiliateID string           `json:"bungee_affiliate_id"`
+		Bridgers          *bridgers.Config `json:"bridgers,omitempty"`
+		Univ2             []univ2.Config   `json:"univ2,omitempty"`
+		Univ3             []univ3.Config   `json:"univ3,omitempty"`
 	}
 	if s := strings.TrimSpace(configJSON); s != "" {
 		if err := json.Unmarshal([]byte(s), &cfg); err != nil {
@@ -50,6 +53,8 @@ func Init(configJSON string) string {
 		jupiterFeeAccount == cfg.FeeAccount
 	currentUniv2 := univ2Clients
 	currentUniv3 := univ3Clients
+	currentBridgers := brg
+	currentBridgersConfig := bridgersConfig
 	tradeMu.RUnlock()
 	if !reuseJupiter {
 		client = jupiter.NewClientWithOptions(cfg.SolanaRPC, cfg.FeeAccount, cfg.JupiterAPIKey)
@@ -58,10 +63,23 @@ func Init(configJSON string) string {
 	if err != nil {
 		return fmt.Sprintf("configure univ2: %v", err)
 	}
-	univ3ByChain, _, err := newUniv3Clients(cfg.Univ3, currentUniv3)
+	univ3ByChain, createdUniv3, err := newUniv3Clients(cfg.Univ3, currentUniv3)
 	if err != nil {
 		closeUniv2ClientList(createdUniv2)
 		return fmt.Sprintf("configure univ3: %v", err)
+	}
+	var bridgersClient *bridgers.Client
+	if cfg.Bridgers != nil {
+		if currentBridgers != nil && sameBridgersConfig(currentBridgersConfig, cfg.Bridgers) {
+			bridgersClient = currentBridgers
+		} else {
+			bridgersClient, err = bridgers.NewClient(*cfg.Bridgers)
+			if err != nil {
+				closeUniv2ClientList(createdUniv2)
+				closeUniv3ClientList(createdUniv3)
+				return fmt.Sprintf("configure bridgers: %v", err)
+			}
+		}
 	}
 	srv := strings.TrimRight(cfg.ServerURL, "/")
 
@@ -81,12 +99,35 @@ func Init(configJSON string) string {
 	}
 	bungeeAPIKey = cfg.BungeeAPIKey
 	bungeeAffiliateID = cfg.BungeeAffiliateID
+	brg = bridgersClient
+	bridgersConfig = cloneBridgersConfig(cfg.Bridgers)
 	univ2Clients = univ2ByChain
 	univ3Clients = univ3ByChain
 	tradeMu.Unlock()
 	closeRetiredUniv2Clients(previousUniv2, univ2ByChain)
 	closeRetiredUniv3Clients(previousUniv3, univ3ByChain)
 	return ""
+}
+
+func sameBridgersConfig(left, right *bridgers.Config) bool {
+	if left == nil || right == nil {
+		return left == right
+	}
+	return left.BaseURL == right.BaseURL &&
+		left.SourceFlag == right.SourceFlag &&
+		left.SourceType == right.SourceType &&
+		left.FixedRateFlag == right.FixedRateFlag &&
+		left.TokenCacheTTL == right.TokenCacheTTL &&
+		left.RateLimit == right.RateLimit
+}
+
+func cloneBridgersConfig(config *bridgers.Config) *bridgers.Config {
+	if config == nil {
+		return nil
+	}
+	copy := *config
+	copy.HTTPOptions = nil
+	return &copy
 }
 
 func jupClient() *jupiter.Client {

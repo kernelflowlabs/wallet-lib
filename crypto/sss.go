@@ -5,11 +5,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/kernelflowlabs/wallet-sdk/crypto/bip"
-
-	"github.com/hashicorp/vault/shamir"
+	"github.com/kernelflowlabs/wallet-sdk/crypto/internal/shamir"
 )
 
 func SSSSplit(data []byte, n, t int) ([][]byte, error) {
@@ -63,21 +63,35 @@ func PerformSplit(str string, totalShares, thresholdShares int) ([]string, error
 }
 
 func PerformRecover(formattedShares []string) (string, error) {
-	if len(formattedShares) < 2 {
-		return "", errors.New("at least 2 shares required")
+	if len(formattedShares) < 2 || len(formattedShares) > 255 {
+		return "", errors.New("between 2 and 255 shares required")
 	}
 
 	byteShares := make([][]byte, len(formattedShares))
 	var expectedFingerprint string
+	indexes := make(map[int]bool, len(formattedShares))
+	coordinates := make(map[byte]bool, len(formattedShares))
 
 	for i, s := range formattedShares {
+		if len(s) > 87 {
+			return "", errors.New("share exceeds size limit")
+		}
 		parts := strings.Split(s, "-")
 		if len(parts) != 3 {
 			return "", fmt.Errorf("invalid shard format at index %d", i)
 		}
 
-		currentFingerprint := parts[0]
-		if expectedFingerprint == "" {
+		fingerprint, err := hex.DecodeString(parts[0])
+		if err != nil || len(fingerprint) != 4 {
+			return "", errors.New("invalid share fingerprint")
+		}
+		index, err := strconv.Atoi(parts[1])
+		if err != nil || index < 0 || index > 254 || strconv.Itoa(index) != parts[1] || indexes[index] {
+			return "", errors.New("invalid or duplicate share index")
+		}
+		indexes[index] = true
+		currentFingerprint := hex.EncodeToString(fingerprint)
+		if i == 0 {
 			expectedFingerprint = currentFingerprint
 		} else if currentFingerprint != expectedFingerprint {
 			return "", errors.New("shards belong to different sets (fingerprint mismatch)")
@@ -87,6 +101,19 @@ func PerformRecover(formattedShares []string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("invalid hex data at index %d", i)
 		}
+		switch len(b) {
+		case 21, 25, 29, 33, 37:
+		default:
+			return "", errors.New("invalid share payload length")
+		}
+		if i > 0 && len(b) != len(byteShares[0]) {
+			return "", errors.New("share payload lengths differ")
+		}
+		coordinate := b[len(b)-1]
+		if coordinate == 0 || coordinates[coordinate] {
+			return "", errors.New("invalid or duplicate share coordinate")
+		}
+		coordinates[coordinate] = true
 		byteShares[i] = b
 	}
 

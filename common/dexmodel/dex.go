@@ -31,6 +31,11 @@ type (
 		Private                 *bool    `json:"private,omitempty"`
 		SimulatedQuotesRequired *bool    `json:"simulatedQuotesRequired,omitempty"`
 		SolanaSponsorAddress    string   `json:"solanaSponsorAddress,omitempty"`
+		EquipmentNo             string   `json:"equipmentNo,omitempty"`
+		SourceType              string   `json:"sourceType,omitempty"`
+		FromCoinCode            string   `json:"fromCoinCode,omitempty"`
+		ToCoinCode              string   `json:"toCoinCode,omitempty"`
+		FixedRateFlag           *int     `json:"fixedRateFlag,omitempty"`
 	}
 	DexQuoteOut struct {
 		Channel string      `json:"channel"`

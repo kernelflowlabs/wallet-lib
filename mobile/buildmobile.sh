@@ -36,6 +36,7 @@ fi
 
 echo "📦 Module root: $root"
 cd "$root"
+bash "$root/mobile/check-go-version.sh"
 
 DIST="./dist"
 mkdir -p "$DIST"

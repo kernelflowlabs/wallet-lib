@@ -13,12 +13,14 @@ import (
 	"github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
 	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
 	"github.com/kernelflowlabs/wallet-sdk/dex"
+	"github.com/kernelflowlabs/wallet-sdk/dex/bridgers"
 	"github.com/kernelflowlabs/wallet-sdk/dex/bungee"
 	"github.com/kernelflowlabs/wallet-sdk/dex/lifi"
 )
 
 var (
 	bng     *bungee.Client
+	brg     *bridgers.Client
 	lfiOnce sync.Once
 	lfi     *lifi.Client
 	proxy   *httpc.Request
@@ -57,6 +59,12 @@ func autoQuoteLiFi() *lifi.Client {
 		)
 	})
 	return lfi
+}
+
+func autoQuoteBridgers() *bridgers.Client {
+	tradeMu.RLock()
+	defer tradeMu.RUnlock()
+	return brg
 }
 
 func serverProxy() *httpc.Request {
@@ -99,6 +107,9 @@ type autoQuoteReq struct {
 	Private                 *bool            `json:"private,omitempty"`
 	SimulatedQuotesRequired *bool            `json:"simulated_quotes_required,omitempty"`
 	SolanaSponsorAddress    string           `json:"solana_sponsor_address,omitempty"`
+	EquipmentNo             string           `json:"equipment_no,omitempty"`
+	SourceType              string           `json:"source_type,omitempty"`
+	FixedRateFlag           *int             `json:"fixed_rate_flag,omitempty"`
 	Candidates              []*wireCandidate `json:"candidates"`
 }
 
@@ -114,6 +125,8 @@ type wireCandidate struct {
 	ToDecimals   int     `json:"to_decimals"`
 	LiquidityUsd float64 `json:"liquidity_usd"`
 	SourceIssuer string  `json:"source_issuer,omitempty"`
+	FromCoinCode string  `json:"from_coin_code,omitempty"`
+	ToCoinCode   string  `json:"to_coin_code,omitempty"`
 }
 
 func AutoQuote(reqJSON string) string {
@@ -135,6 +148,8 @@ func AutoQuote(reqJSON string) string {
 			ToDecimals:   c.ToDecimals,
 			LiquidityUsd: c.LiquidityUsd,
 			SourceIssuer: c.SourceIssuer,
+			FromCoinCode: c.FromCoinCode,
+			ToCoinCode:   c.ToCoinCode,
 		})
 	}
 	sdkReq := &dex.Request{
@@ -160,6 +175,9 @@ func AutoQuote(reqJSON string) string {
 		Private:                 req.Private,
 		SimulatedQuotesRequired: req.SimulatedQuotesRequired,
 		SolanaSponsorAddress:    req.SolanaSponsorAddress,
+		EquipmentNo:             req.EquipmentNo,
+		SourceType:              req.SourceType,
+		FixedRateFlag:           req.FixedRateFlag,
 	}
 	engine := &dex.Engine{}
 	resp := engine.Quote(context.Background(), sdkReq, cands, dispatch)
@@ -185,6 +203,12 @@ func dispatch(ctx context.Context, cand *dex.Candidate, in *dexmodel.DexQuoteIn)
 		return autoQuoteBungee().Quote(ctx, in)
 	case "lifi":
 		return autoQuoteLiFi().Quote(ctx, in)
+	case "bridgers":
+		client := autoQuoteBridgers()
+		if client == nil {
+			return nil, &dex.ChannelConfigurationError{Channel: "bridgers", Chain: cand.FromChain}
+		}
+		return client.Quote(ctx, in)
 	case "univ2":
 		client, release := acquireUniv2Client(cand.FromChain)
 		if client == nil {
@@ -275,6 +299,21 @@ func quoteViaServer(ctx context.Context, in *dexmodel.DexQuoteIn) (*dexmodel.Dex
 	}
 	if in.SolanaSponsorAddress != "" {
 		q.Set("solanaSponsorAddress", in.SolanaSponsorAddress)
+	}
+	if in.EquipmentNo != "" {
+		q.Set("equipmentNo", in.EquipmentNo)
+	}
+	if in.SourceType != "" {
+		q.Set("sourceType", in.SourceType)
+	}
+	if in.FromCoinCode != "" {
+		q.Set("fromCoinCode", in.FromCoinCode)
+	}
+	if in.ToCoinCode != "" {
+		q.Set("toCoinCode", in.ToCoinCode)
+	}
+	if in.FixedRateFlag != nil {
+		q.Set("fixedRateFlag", strconv.Itoa(*in.FixedRateFlag))
 	}
 	var env struct {
 		Code int                   `json:"code"`
