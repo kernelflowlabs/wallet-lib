@@ -121,7 +121,7 @@ func (c *Client) crossChainStatus(ctx context.Context, in *dexmodel.DexCheckTxIn
 		return nil, fmt.Errorf("ambiguous cross-chain status")
 	}
 	entry := response.Data[0]
-	if !strings.EqualFold(entry.TxHash, in.Hash) || entry.ChainIndex != chain || entry.BridgeID != bridge {
+	if !strings.EqualFold(entry.TxHash, in.Hash) || entry.ChainIndex != chain {
 		return nil, fmt.Errorf("cross-chain status identity mismatch")
 	}
 	result.ProviderStatus = entry.Status
@@ -131,6 +131,8 @@ func (c *Client) crossChainStatus(ctx context.Context, in *dexmodel.DexCheckTxIn
 			return nil, fmt.Errorf("successful cross-chain status has no destination hash")
 		}
 		result.Status, result.ToHash = dexmodel.DexStatusSucceeded, entry.ToTxHash
+	case "NOT_FOUND":
+		result.Status = dexmodel.DexStatusNotFound
 	case "REFUNDED", "REFUND_SUCCESS":
 		if !validTransactionHash(entry.RefundTxHash) {
 			return result, nil

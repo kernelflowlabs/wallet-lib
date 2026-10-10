@@ -372,6 +372,26 @@ var idChainMapperReverse = func() map[string]string {
 	return m
 }()
 
+var nonEVMChainIDs = map[string]struct{}{
+	"195": {},
+	"501": {},
+	"607": {},
+	"784": {},
+}
+
+func isEVMChainID(id string) bool {
+	if _, ok := idChainMapper[id]; !ok {
+		return false
+	}
+	_, nonEVM := nonEVMChainIDs[id]
+	return !nonEVM
+}
+
+func isEVMChain(chain string) bool {
+	id, ok := idChainMapperReverse[chain]
+	return ok && isEVMChainID(id)
+}
+
 func parseFloat(s string) float64 {
 	f, _ := strconv.ParseFloat(s, 64)
 	return f

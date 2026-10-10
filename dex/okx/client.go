@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
@@ -23,7 +22,6 @@ type Client struct {
 	apiKey     string
 	apiSecret  string
 	passphrase string
-	mu         sync.Mutex
 }
 
 func NewClient(apiKey, apiSecret, passphrase string) *Client {
@@ -54,7 +52,9 @@ func (c *Client) SupportedChains(ctx context.Context) ([]string, error) {
 
 	var res []string
 	for _, v := range out.Data {
-		res = append(res, v.ChainName)
+		if isEVMChainID(v.ChainIndex) {
+			res = append(res, v.ChainName)
+		}
 	}
 	return res, nil
 }
@@ -70,7 +70,7 @@ func (c *Client) SupportedCrossChains(ctx context.Context) ([]string, error) {
 	seen := make(map[string]bool)
 	for _, bridge := range out.Data {
 		for _, id := range bridge.SupportedChains {
-			if chain, ok := idChainMapper[id]; ok {
+			if chain, ok := idChainMapper[id]; ok && isEVMChainID(id) {
 				seen[chain] = true
 			}
 		}
@@ -84,6 +84,15 @@ func (c *Client) SupportedCrossChains(ctx context.Context) ([]string, error) {
 }
 
 func (c *Client) PreSingleChainQuote(ctx context.Context, in *dexmodel.DexQuoteIn) (*dexmodel.DexQuoteOut, error) {
+	if in == nil {
+		return nil, fmt.Errorf("quote request is nil")
+	}
+	copy := *in
+	copy.FromChain = strings.ToUpper(strings.TrimSpace(in.FromChain))
+	if !isEVMChain(copy.FromChain) {
+		return nil, fmt.Errorf("unsupported EVM chain: %s", copy.FromChain)
+	}
+	in = &copy
 	req := c.toOkxSingleChainQuoteReq(in)
 	if req == nil {
 		return nil, fmt.Errorf("fail to convert request to QuoteReq")
@@ -117,6 +126,9 @@ func (c *Client) Quote(ctx context.Context, in *dexmodel.DexQuoteIn) (*dexmodel.
 	}
 	copy := *in
 	copy.FromChain, copy.ToChain = strings.ToUpper(strings.TrimSpace(in.FromChain)), strings.ToUpper(strings.TrimSpace(in.ToChain))
+	if !isEVMChain(copy.FromChain) || !isEVMChain(copy.ToChain) {
+		return nil, fmt.Errorf("OKX quotes support EVM chains only")
+	}
 	if copy.ContractCaller != "" {
 		copy.FromAddress = copy.ContractCaller
 	}
@@ -223,6 +235,12 @@ func (c *Client) Status(ctx context.Context, in *dexmodel.DexCheckTxIn) (*dexmod
 	if in == nil {
 		return nil, fmt.Errorf("status request is nil")
 	}
+	copy := *in
+	copy.FromChain, copy.ToChain = strings.ToUpper(strings.TrimSpace(in.FromChain)), strings.ToUpper(strings.TrimSpace(in.ToChain))
+	if !isEVMChain(copy.FromChain) || copy.ToChain != "" && !isEVMChain(copy.ToChain) {
+		return nil, fmt.Errorf("OKX status supports EVM chains only")
+	}
+	in = &copy
 	if in.FromChain != in.ToChain && in.ToChain != "" {
 		return c.crossChainStatus(ctx, in)
 	}
@@ -262,9 +280,6 @@ func (c *Client) signedGet(ctx context.Context, res interface{}, path string, qu
 			query.Del(key)
 		}
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	timestamp := time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
 	requestPath := path
 	if len(query) > 0 {
@@ -272,12 +287,13 @@ func (c *Client) signedGet(ctx context.Context, res interface{}, path string, qu
 	}
 	sign := c.hmacSign(timestamp + "GET" + "/" + requestPath)
 
-	c.client.SetHeader("OK-ACCESS-KEY", c.apiKey)
-	c.client.SetHeader("OK-ACCESS-SIGN", sign)
-	c.client.SetHeader("OK-ACCESS-PASSPHRASE", c.passphrase)
-	c.client.SetHeader("OK-ACCESS-TIMESTAMP", timestamp)
-
-	return c.client.Get(ctx, res, path, query)
+	headers := map[string]string{
+		"OK-ACCESS-KEY":        c.apiKey,
+		"OK-ACCESS-SIGN":       sign,
+		"OK-ACCESS-PASSPHRASE": c.passphrase,
+		"OK-ACCESS-TIMESTAMP":  timestamp,
+	}
+	return c.client.GetWithHeaders(ctx, res, path, query, headers)
 }
 
 func (c *Client) hmacSign(message string) string {

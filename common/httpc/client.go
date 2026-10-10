@@ -176,6 +176,14 @@ func (r *Request) Get(ctx context.Context, result interface{}, path string, quer
 	return r.Execute(ctx, http.MethodGet, uri, nil, result)
 }
 
+func (r *Request) GetWithHeaders(ctx context.Context, result interface{}, path string, query url.Values, headers map[string]string) error {
+	uri, err := r.buildURL(path, query)
+	if err != nil {
+		return err
+	}
+	return r.execute(ctx, http.MethodGet, uri, nil, result, headers)
+}
+
 func (r *Request) GetRaw(ctx context.Context, result *bytes.Buffer, path string, query url.Values) error {
 	uri, err := r.buildURL(path, query)
 	if err != nil {
@@ -293,7 +301,11 @@ func GetJsonBody(body interface{}) (buf io.ReadWriter, err error) {
 }
 
 func (r *Request) Execute(ctx context.Context, method string, requestURL string, body io.Reader, result interface{}) error {
-	res, maxResponseBytes, err := r.executeRequest(ctx, method, requestURL, body)
+	return r.execute(ctx, method, requestURL, body, result, nil)
+}
+
+func (r *Request) execute(ctx context.Context, method string, requestURL string, body io.Reader, result interface{}, headers map[string]string) error {
+	res, maxResponseBytes, err := r.executeRequest(ctx, method, requestURL, body, headers)
 	if err != nil {
 		return err
 	}
@@ -324,7 +336,7 @@ func (r *Request) Execute(ctx context.Context, method string, requestURL string,
 }
 
 func (r *Request) ExecuteRaw(ctx context.Context, method string, requestURL string, body io.Reader, result *bytes.Buffer) error {
-	res, maxResponseBytes, err := r.executeRequest(ctx, method, requestURL, body)
+	res, maxResponseBytes, err := r.executeRequest(ctx, method, requestURL, body, nil)
 	if err != nil {
 		return err
 	}
@@ -349,7 +361,7 @@ func (r *Request) ExecuteRaw(ctx context.Context, method string, requestURL stri
 	return err
 }
 
-func (r *Request) executeRequest(ctx context.Context, method string, requestURL string, body io.Reader) (*http.Response, int64, error) {
+func (r *Request) executeRequest(ctx context.Context, method string, requestURL string, body io.Reader, headers map[string]string) (*http.Response, int64, error) {
 	r.stateLock.RLock()
 	limiter := r.limiter
 	client := r.httpClient
@@ -372,6 +384,9 @@ func (r *Request) executeRequest(ctx context.Context, method string, requestURL 
 		req.Header.Set(key, value)
 	}
 	r.headerLock.RUnlock()
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
 	if req.Header.Get("User-Agent") == "" {
 		req.Header.Set("User-Agent", defaultUserAgent)
 	}
