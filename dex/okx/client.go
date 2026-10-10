@@ -1,8 +1,6 @@
 package okx
 
 import (
-	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -10,8 +8,14 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"sort"
+	"strings"
 	"sync"
 	"time"
+
+	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
+	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
+	"github.com/shopspring/decimal"
 )
 
 type Client struct {
@@ -23,15 +27,17 @@ type Client struct {
 }
 
 func NewClient(apiKey, apiSecret, passphrase string) *Client {
-	return &Client{
-		client: httpc.NewRequest("https://web3.okx.com",
-			map[string]string{
-				"Content-Type": "application/json",
-			}),
-		apiKey:     apiKey,
-		apiSecret:  apiSecret,
-		passphrase: passphrase,
+	client, _ := NewClientWithOptions(apiKey, apiSecret, passphrase)
+	return client
+}
+
+func NewClientWithOptions(apiKey, apiSecret, passphrase string, options ...httpc.Option) (*Client, error) {
+	options = append(options, httpc.WithMaxResponseBytes(8<<20))
+	request, err := httpc.NewRequestWithOptions("https://web3.okx.com", map[string]string{"Content-Type": "application/json"}, options...)
+	if err != nil {
+		return nil, err
 	}
+	return &Client{client: request, apiKey: apiKey, apiSecret: apiSecret, passphrase: passphrase}, nil
 }
 
 func (c *Client) SupportedChains(ctx context.Context) ([]string, error) {
@@ -54,22 +60,27 @@ func (c *Client) SupportedChains(ctx context.Context) ([]string, error) {
 }
 
 func (c *Client) SupportedCrossChains(ctx context.Context) ([]string, error) {
-	path := "api/v5/dex/cross-chain/supported/chain"
-	query := url.Values{}
-
-	out := &SupportedChainsRes{}
-	err := c.signedGet(ctx, out, path, query)
-	if err != nil {
-		return nil, fmt.Errorf("fail to get supported chains, err=%v", err)
-	} else if !out.IsSuccess() {
-		return nil, fmt.Errorf("fail to get supported chains, code=%s, msg=%s", out.Code, out.Msg)
+	out := &CrossBridgesResponse{}
+	if err := c.signedGet(ctx, out, "api/v6/dex/cross-chain/supported/bridges", url.Values{}); err != nil {
+		return nil, err
 	}
-
-	var res []string
-	for _, v := range out.Data {
-		res = append(res, v.ChainName)
+	if !out.IsSuccess() {
+		return nil, fmt.Errorf("get cross-chain bridges: code=%s", out.Code)
 	}
-	return res, nil
+	seen := make(map[string]bool)
+	for _, bridge := range out.Data {
+		for _, id := range bridge.SupportedChains {
+			if chain, ok := idChainMapper[id]; ok {
+				seen[chain] = true
+			}
+		}
+	}
+	result := make([]string, 0, len(seen))
+	for chain := range seen {
+		result = append(result, chain)
+	}
+	sort.Strings(result)
+	return result, nil
 }
 
 func (c *Client) PreSingleChainQuote(ctx context.Context, in *dexmodel.DexQuoteIn) (*dexmodel.DexQuoteOut, error) {
@@ -101,6 +112,15 @@ func (c *Client) PreSingleChainQuote(ctx context.Context, in *dexmodel.DexQuoteI
 }
 
 func (c *Client) Quote(ctx context.Context, in *dexmodel.DexQuoteIn) (*dexmodel.DexQuoteOut, error) {
+	if in == nil {
+		return nil, fmt.Errorf("quote request is nil")
+	}
+	copy := *in
+	copy.FromChain, copy.ToChain = strings.ToUpper(strings.TrimSpace(in.FromChain)), strings.ToUpper(strings.TrimSpace(in.ToChain))
+	if copy.ContractCaller != "" {
+		copy.FromAddress = copy.ContractCaller
+	}
+	in = &copy
 	if in.FromChain == in.ToChain {
 		return c.singleChainQuote(ctx, in)
 	}
@@ -121,6 +141,9 @@ func (c *Client) singleChainQuote(ctx context.Context, in *dexmodel.DexQuoteIn) 
 	query.Set("amount", req.Amount)
 	query.Set("slippagePercent", req.Slippage)
 	query.Set("userWalletAddress", req.UserAddress)
+	if in.ToAddress != "" {
+		query.Set("swapReceiverAddress", in.ToAddress)
+	}
 	query.Set("approveTransaction", "true")
 	query.Set("approveAmount", req.Amount)
 	query.Set("singleRouteOnly", "true")
@@ -153,21 +176,25 @@ func (c *Client) crossChainQuote(ctx context.Context, in *dexmodel.DexQuoteIn) (
 		return nil, fmt.Errorf("fail to convert request to QuoteReq")
 	}
 
-	path := "api/v5/dex/cross-chain/build-tx"
+	path := "api/v6/dex/cross-chain/swap"
 	query := url.Values{}
-	query.Set("fromChainId", req.FromChainIndex)
-	query.Set("toChainId", req.ToChainIndex)
+	query.Set("fromChainIndex", req.FromChainIndex)
+	query.Set("toChainIndex", req.ToChainIndex)
 	query.Set("fromTokenAddress", req.FromToken)
 	query.Set("toTokenAddress", req.ToToken)
 	query.Set("userWalletAddress", req.UserAddress)
 	query.Set("receiveAddress", req.ReceiverAddress)
 	query.Set("amount", req.Amount)
-	query.Set("slippage", req.Slippage)
+	slippage, err := decimal.NewFromString(req.Slippage)
+	if err != nil || !slippage.GreaterThan(decimal.Zero) || !slippage.LessThan(decimal.NewFromInt(100)) {
+		return nil, fmt.Errorf("invalid slippage percent")
+	}
+	query.Set("slippage", slippage.Div(decimal.NewFromInt(100)).String())
 	query.Set("referrerAddress", req.ReferrerAddress)
 	query.Set("feePercent", req.FeePercent)
 
 	out := &CrossChainQuoteRes{}
-	err := c.signedGet(ctx, out, path, query)
+	err = c.signedGet(ctx, out, path, query)
 	if err != nil {
 		return nil, fmt.Errorf("fail to swap, err=%v", err)
 	} else if !out.IsSuccess() {
@@ -178,6 +205,13 @@ func (c *Client) crossChainQuote(ctx context.Context, in *dexmodel.DexQuoteIn) (
 	if err != nil || len(data) == 0 {
 		return nil, fmt.Errorf("fail to swap, no data")
 	}
+	if !strings.EqualFold(in.FromToken, "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") {
+		approval, err := c.crossChainApproval(ctx, in, data[0].Router.BridgeId)
+		if err != nil {
+			return nil, err
+		}
+		data[0].Tx.SignatureData = []string{approval}
+	}
 	res := c.toStandardQuoteResFromCrossResData(data[0], in)
 	if res == nil {
 		return nil, fmt.Errorf("fail to convert response")
@@ -186,6 +220,12 @@ func (c *Client) crossChainQuote(ctx context.Context, in *dexmodel.DexQuoteIn) (
 }
 
 func (c *Client) Status(ctx context.Context, in *dexmodel.DexCheckTxIn) (*dexmodel.DexCheckTxOut, error) {
+	if in == nil {
+		return nil, fmt.Errorf("status request is nil")
+	}
+	if in.FromChain != in.ToChain && in.ToChain != "" {
+		return c.crossChainStatus(ctx, in)
+	}
 	chainId, ok := idChainMapperReverse[in.FromChain]
 	if !ok {
 		log.Printf("not found chain id %s", in.FromChain)
@@ -211,12 +251,19 @@ func (c *Client) Status(ctx context.Context, in *dexmodel.DexCheckTxIn) (*dexmod
 		return nil, fmt.Errorf("fail to convert response")
 	}
 	res.Channel = in.Channel
-	res.ToHash = in.ToChain
+	res.ToChain = in.ToChain
 	return res, nil
 }
 
 func (c *Client) signedGet(ctx context.Context, res interface{}, path string, query url.Values) error {
+	query = cloneQuery(query)
+	for _, key := range []string{"feePercent", "referrerAddress", "toTokenReferrerWalletAddress"} {
+		if query.Get(key) == "" || key == "feePercent" && query.Get(key) == "0" {
+			query.Del(key)
+		}
+	}
 	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	timestamp := time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
 	requestPath := path
@@ -229,7 +276,6 @@ func (c *Client) signedGet(ctx context.Context, res interface{}, path string, qu
 	c.client.SetHeader("OK-ACCESS-SIGN", sign)
 	c.client.SetHeader("OK-ACCESS-PASSPHRASE", c.passphrase)
 	c.client.SetHeader("OK-ACCESS-TIMESTAMP", timestamp)
-	c.mu.Unlock()
 
 	return c.client.Get(ctx, res, path, query)
 }

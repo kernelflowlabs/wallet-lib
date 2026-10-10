@@ -1,11 +1,12 @@
 package okx
 
 import (
-	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
 	"encoding/json"
 	"fmt"
+	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
 	"log"
 	"strconv"
+	"strings"
 )
 
 type (
@@ -59,13 +60,14 @@ type (
 			TradeFee        string `json:"tradeFee"`
 		} `json:"routerResult"`
 		Tx struct {
-			From             string `json:"from"`
-			To               string `json:"to"`
-			Data             string `json:"data"`
-			Value            string `json:"value"`
-			Gas              string `json:"gas"`
-			GasPrice         string `json:"gasPrice"`
-			MinReceiveAmount string `json:"minReceiveAmount"`
+			From             string   `json:"from"`
+			To               string   `json:"to"`
+			Data             string   `json:"data"`
+			Value            string   `json:"value"`
+			Gas              string   `json:"gas"`
+			GasPrice         string   `json:"gasPrice"`
+			MinReceiveAmount string   `json:"minReceiveAmount"`
+			SignatureData    []string `json:"signatureData"`
 		} `json:"tx"`
 	}
 	CrossChainQuoteRes struct {
@@ -81,16 +83,18 @@ type (
 			OtherNativeFee            string `json:"otherNativeFee"`
 			CrossChainFeeTokenAddress string `json:"crossChainFeeTokenAddress"`
 		} `json:"router"`
-		ToTokenAmount string `json:"toTokenAmount"`
-		MinmumReceive string `json:"minmumReceive"`
-		Tx            struct {
-			Data                 string  `json:"data"`
-			From                 string  `json:"from"`
-			To                   string  `json:"to"`
-			Value                float64 `json:"value"`
-			GasLimit             string  `json:"gasLimit"`
-			GasPrice             string  `json:"gasPrice"`
-			MaxPriorityFeePerGas string  `json:"maxPriorityFeePerGas"`
+		ToTokenAmount   string `json:"toTokenAmount"`
+		MinmumReceive   string `json:"minmumReceive"`
+		MinimumReceived string `json:"minimumReceived"`
+		Tx              struct {
+			Data                 string    `json:"data"`
+			From                 string    `json:"from"`
+			To                   string    `json:"to"`
+			Value                RawAmount `json:"value"`
+			SignatureData        []string  `json:"signatureData"`
+			GasLimit             string    `json:"gasLimit"`
+			GasPrice             string    `json:"gasPrice"`
+			MaxPriorityFeePerGas string    `json:"maxPriorityFeePerGas"`
 		} `json:"tx"`
 	}
 	CrossChainBuildTxRes struct {
@@ -226,7 +230,7 @@ func (c *Client) toStandardQuoteResPre(res *SingleChainQuoteRes, in *dexmodel.De
 		return &dexmodel.DexQuoteOut{Channel: "okx"}
 	}
 	d := res.Data[0]
-	chainId, ok := idChainMapper[in.FromChain]
+	chainId, ok := idChainMapperReverse[in.FromChain]
 	if !ok {
 		return nil
 	}
@@ -269,6 +273,9 @@ func (c *Client) toStandardQuoteResFromSwapResData(data SwapResData, in *dexmode
 		NeedBuild:     false,
 		TxData:        txData,
 	}
+	if err := applyApproval(route, in, data.Tx.SignatureData); err != nil {
+		return nil
+	}
 	return &dexmodel.DexQuoteOut{
 		Channel: "okx",
 		Routes:  []*dexmodel.DexRoute{route},
@@ -280,19 +287,25 @@ func (c *Client) toStandardQuoteResFromCrossResData(data CrossResData, in *dexmo
 		RouteId:      fmt.Sprintf("%d", data.Router.BridgeId),
 		Name:         data.Router.BridgeName,
 		AmountOut:    data.ToTokenAmount,
-		AmountOutMin: data.MinmumReceive,
+		AmountOutMin: data.MinimumReceived,
 		Slippage:     parseFloat(in.Slippage),
 		FeeInUsd:     data.Router.CrossChainFee,
 		NeedBuild:    false,
 		TxData: &dexmodel.DexTx{
 			To:       data.Tx.To,
 			Data:     data.Tx.Data,
-			Value:    strconv.FormatFloat(data.Tx.Value, 'f', 0, 64),
+			Value:    string(data.Tx.Value),
 			GasPrice: data.Tx.GasPrice,
 			GasLimit: data.Tx.GasLimit,
 		},
 	}
 
+	if route.AmountOutMin == "" {
+		route.AmountOutMin = data.MinmumReceive
+	}
+	if err := applyApproval(route, in, data.Tx.SignatureData); err != nil {
+		return nil
+	}
 	return &dexmodel.DexQuoteOut{
 		Channel: "okx",
 		Routes:  []*dexmodel.DexRoute{route},
@@ -301,7 +314,7 @@ func (c *Client) toStandardQuoteResFromCrossResData(data CrossResData, in *dexmo
 
 func (c *Client) toStandardStatusRes(res *HistoryRes) *dexmodel.DexCheckTxOut {
 	var status dexmodel.DexStatus
-	switch res.Data.Status {
+	switch strings.ToLower(res.Data.Status) {
 	case "success":
 		status = dexmodel.DexStatusSucceeded
 	case "fail":

@@ -697,7 +697,7 @@ func decimalFloat(value decimal.Decimal) float64 {
 }
 
 func standardStatus(status string) (dexmodel.DexStatus, string) {
-	switch status {
+	switch strings.ToLower(strings.TrimSpace(status)) {
 	case "receive_complete":
 		return dexmodel.DexStatusSucceeded, ""
 	case "refund_complete":
@@ -705,7 +705,7 @@ func standardStatus(status string) (dexmodel.DexStatus, string) {
 	case "wait_deposit_send_fail", "timeout":
 		return dexmodel.DexStatusFailed, ""
 	case "wait_deposit_send", "wait_exchange_push", "wait_exchange_return", "wait_exchange_return_success",
-		"wait_receive_send", "wait_enough_send", "wait_receive_confirm", "wait_refund_send", "wait_refund_confirm", "ERROR":
+		"wait_receive_send", "wait_enough_send", "wait_receive_confirm", "wait_refund_send", "wait_refund_confirm", "error":
 		return dexmodel.DexStatusPending, ""
 	case "wait_for_information":
 		return dexmodel.DexStatusPending, "Bridgers requires support review"
