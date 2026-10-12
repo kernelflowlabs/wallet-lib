@@ -5,7 +5,7 @@ import (
 
 	"github.com/kernelflowlabs/wallet-sdk/signing"
 
-	"github.com/btcsuite/btcd/btcutil/bech32"
+	"github.com/btcsuite/btcd/address/v2/bech32"
 )
 
 func PublicKey2Address(publicKey []byte) string {

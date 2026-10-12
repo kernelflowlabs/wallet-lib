@@ -9,7 +9,7 @@ import (
 	"math/big"
 	"strconv"
 
-	"github.com/btcsuite/btcd/btcutil/base58"
+	"github.com/btcsuite/btcd/address/v2/base58"
 	borsh "github.com/near/borsh-go"
 
 	"github.com/kernelflowlabs/wallet-sdk/signing"
@@ -68,9 +68,9 @@ func (tx *TxBuilder) Build() error {
 					return fmt.Errorf("fail to Marshal for args, err=%v", err)
 				}
 				storageBounds, ok := big.NewInt(0).SetString(tx.Ingredient.RequiredAmount, 10)
-			if !ok {
-				return fmt.Errorf("invalid requiredAmount %q", tx.Ingredient.RequiredAmount)
-			}
+				if !ok {
+					return fmt.Errorf("invalid requiredAmount %q", tx.Ingredient.RequiredAmount)
+				}
 				functionCall := functionCallEvent{
 					MethodName: "storage_deposit",
 					Args:       argsBytes,

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/btcsuite/btcd/btcutil/base58"
+	"github.com/btcsuite/btcd/address/v2/base58"
 
 	"github.com/kernelflowlabs/wallet-sdk/crypto/key"
 	"github.com/kernelflowlabs/wallet-sdk/signing"

@@ -1,7 +1,7 @@
 package substrate
 
 import (
-	"github.com/btcsuite/btcd/btcutil/base58"
+	"github.com/btcsuite/btcd/address/v2/base58"
 	"golang.org/x/crypto/blake2b"
 )
 

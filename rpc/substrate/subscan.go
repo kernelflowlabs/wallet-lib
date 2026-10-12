@@ -1,8 +1,8 @@
 package substrate
 
 import (
+	"github.com/btcsuite/btcd/address/v2/base58"
 	walletsubstrate "github.com/kernelflowlabs/wallet-sdk/signing/substrate"
-	"github.com/btcsuite/btcd/btcutil/base58"
 )
 
 func convert2PublicKey(address string) []byte {

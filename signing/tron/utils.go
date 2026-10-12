@@ -8,8 +8,8 @@ import (
 
 	"github.com/kernelflowlabs/wallet-sdk/signing"
 
+	"github.com/btcsuite/btcd/address/v2/base58"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcutil/base58"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 

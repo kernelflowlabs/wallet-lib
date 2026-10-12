@@ -6,24 +6,10 @@ dist/
 *.log
 /cmd/
 /ton
-
-# Test fixtures — may embed mnemonics, API keys, or user-identifying
-# addresses. Keep local for developer use; never commit to a public repo.
 *_test.go
-
-# Local-only dev scaffolding (hand-run scripts, may embed mnemonics
-# and internal RPC URLs). Anything a public consumer needs must live
-# under mobile/example/ instead.
 mobile/example_local/
 mobile/test/
-
-# Agent working-directory instructions. Contains incident history and
-# operational rules that shouldn't ship in the public tree.
-CLAUDE.md
-
-# Cross-agent task handoff notes. May reference internal infra and
-# real wallet addresses; never ship in the public tree.
+AGENTS.md
 AGENT_TASKS.md
-
-# Internal audit report — vulnerability map, never ship in the public tree.
 CODE_AUDIT_REPORT.md
+docs/

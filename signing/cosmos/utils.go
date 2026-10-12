@@ -3,8 +3,8 @@ package cosmos
 import (
 	"fmt"
 
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/btcutil/bech32"
+	btcaddr "github.com/btcsuite/btcd/address/v2"
+	"github.com/btcsuite/btcd/address/v2/bech32"
 )
 
 const (
@@ -39,7 +39,7 @@ func PublicKey2Address(publicKey []byte, network string) (string, error) {
 	if prefix == "" {
 		return "", fmt.Errorf("unsupported network")
 	}
-	hash160 := btcutil.Hash160(publicKey)
+	hash160 := btcaddr.Hash160(publicKey)
 	address, err := bech32.EncodeFromBase256(prefix, hash160)
 	if err != nil {
 		return "", err

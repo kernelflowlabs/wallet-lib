@@ -7,7 +7,9 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -15,17 +17,20 @@ import (
 	"strings"
 
 	"github.com/go-jose/go-jose/v4"
+	"github.com/youmark/pkcs8"
 	"golang.org/x/crypto/scrypt"
 )
 
 const (
-	MaxJWEPublicKeyBytes = 16 * 1024
-	MaxJWEPlaintextBytes = 1024 * 1024
-	cipherSaltSize       = 32
-	cipherKeySize        = 32
-	cipherScryptN        = 32768
-	cipherScryptR        = 8
-	cipherScryptP        = 1
+	MaxJWEPublicKeyBytes  = 16 * 1024
+	MaxJWEPlaintextBytes  = 1024 * 1024
+	MaxJWEPrivateKeyBytes = 32 * 1024
+	MaxJWECiphertextBytes = 2 * 1024 * 1024
+	cipherSaltSize        = 32
+	cipherKeySize         = 32
+	cipherScryptN         = 32768
+	cipherScryptR         = 8
+	cipherScryptP         = 1
 )
 
 func EncryptText(clearText, password []byte) ([]byte, error) {
@@ -144,4 +149,74 @@ func EncryptJWE(publicKeyPEM, plaintext []byte) ([]byte, error) {
 		return nil, err
 	}
 	return []byte(compact), nil
+}
+
+func DecryptJWE(privateKeyPEM, ciphertext []byte, privateKeyPassword ...[]byte) ([]byte, error) {
+	if len(privateKeyPassword) > 1 {
+		return nil, errors.New("expected at most one private key password")
+	}
+	if len(privateKeyPEM) > MaxJWEPrivateKeyBytes || len(ciphertext) > MaxJWECiphertextBytes {
+		return nil, errors.New("JWE input exceeds size limit")
+	}
+	block, rest := pem.Decode(privateKeyPEM)
+	if block == nil || len(block.Headers) != 0 || strings.TrimSpace(string(rest)) != "" {
+		return nil, errors.New("expected one RSA private key PEM")
+	}
+	defer clear(block.Bytes)
+	var key *rsa.PrivateKey
+	var err error
+	switch block.Type {
+	case "ENCRYPTED PRIVATE KEY":
+		if len(privateKeyPassword) == 0 || len(privateKeyPassword[0]) == 0 {
+			return nil, errors.New("encrypted private key requires a password")
+		}
+		var parsed any
+		parsed, err = pkcs8.ParsePKCS8PrivateKey(block.Bytes, privateKeyPassword[0])
+		if err != nil {
+			return nil, errors.New("cannot decrypt private key: incorrect password or invalid encrypted PKCS8")
+		}
+		key, _ = parsed.(*rsa.PrivateKey)
+	case "PRIVATE KEY":
+		var parsed any
+		parsed, err = x509.ParsePKCS8PrivateKey(block.Bytes)
+		key, _ = parsed.(*rsa.PrivateKey)
+	case "RSA PRIVATE KEY":
+		key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	default:
+		return nil, errors.New("expected PKCS8, encrypted PKCS8 or PKCS1 private key")
+	}
+	if err != nil || key == nil || key.N == nil || key.N.BitLen() < 3072 || key.N.BitLen() > 8192 || key.E != 65537 {
+		return nil, errors.New("invalid RSA private key")
+	}
+	if err = key.Validate(); err != nil {
+		return nil, errors.New("invalid RSA private key")
+	}
+	parts := strings.Split(string(ciphertext), ".")
+	if len(parts) != 5 || len(parts[0]) > 4096 {
+		return nil, errors.New("expected compact JWE")
+	}
+	header, err := base64.RawURLEncoding.DecodeString(parts[0])
+	if err != nil {
+		return nil, errors.New("invalid JWE header")
+	}
+	var fields map[string]json.RawMessage
+	if json.Unmarshal(header, &fields) != nil {
+		return nil, errors.New("invalid JWE header")
+	}
+	if _, compressed := fields["zip"]; compressed {
+		return nil, errors.New("compressed JWE is not supported")
+	}
+	object, err := jose.ParseEncrypted(string(ciphertext), []jose.KeyAlgorithm{jose.RSA_OAEP_256}, []jose.ContentEncryption{jose.A256GCM})
+	if err != nil {
+		return nil, errors.New("invalid JWE")
+	}
+	plaintext, err := object.Decrypt(key)
+	if err != nil {
+		return nil, errors.New("JWE decryption failed")
+	}
+	if len(plaintext) == 0 || len(plaintext) > MaxJWEPlaintextBytes {
+		clear(plaintext)
+		return nil, errors.New("invalid JWE plaintext size")
+	}
+	return plaintext, nil
 }

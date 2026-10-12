@@ -9,14 +9,14 @@ import (
 	"strconv"
 	"strings"
 
+	btcaddr "github.com/btcsuite/btcd/address/v2"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/btcutil/psbt"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/txscript"
-	"github.com/btcsuite/btcd/wire"
+	"github.com/btcsuite/btcd/chaincfg/v2"
+	"github.com/btcsuite/btcd/chainhash/v2"
+	"github.com/btcsuite/btcd/psbt/v2"
+	"github.com/btcsuite/btcd/txscript/v2"
+	"github.com/btcsuite/btcd/wire/v2"
 )
 
 func NewTxBuilder(ti *Ingredient, network string) *TxBuilder {
@@ -495,7 +495,7 @@ func buildForBTC(i *Ingredient) ([]string, string, error) {
 		msgTx.AddTxIn(txIn)
 	}
 	for i, toAddr := range toAddrArr {
-		toAddress, err := btcutil.DecodeAddress(toAddr, &params)
+		toAddress, err := btcaddr.DecodeAddress(toAddr, &params)
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to DecodeAddress for toAddr, err=%v", err)
 		}
@@ -529,7 +529,7 @@ func buildForBTC(i *Ingredient) ([]string, string, error) {
 	*/
 
 	//cal txhash
-	senderAddr, err := btcutil.DecodeAddress(i.Sender, &params)
+	senderAddr, err := btcaddr.DecodeAddress(i.Sender, &params)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to DecodeAddress for sender, err=%v", err)
 	}
@@ -581,7 +581,7 @@ func buildForBTCP2TR(i *Ingredient) ([]string, string, error) {
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to DecodeAddress for sender, err=%v", err)
 	}
-	if _, ok := senderAddr.(*btcutil.AddressTaproot); !ok {
+	if _, ok := senderAddr.(*btcaddr.AddressTaproot); !ok {
 		return nil, "", fmt.Errorf("sender %s is not a taproot address", i.Sender)
 	}
 	pkData, err := txscript.PayToAddrScript(senderAddr)
@@ -754,7 +754,7 @@ func buildForLTC(i *Ingredient) ([]string, string, error) {
 		msgTx.AddTxIn(txIn)
 	}
 	for i, toAddr := range toAddrArr {
-		toAddress, err := btcutil.DecodeAddress(toAddr, &params)
+		toAddress, err := btcaddr.DecodeAddress(toAddr, &params)
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to DecodeAddress for toAddr, err=%v", err)
 		}
@@ -767,7 +767,7 @@ func buildForLTC(i *Ingredient) ([]string, string, error) {
 	}
 
 	//cal txhash
-	senderAddr, err := btcutil.DecodeAddress(i.Sender, &params)
+	senderAddr, err := btcaddr.DecodeAddress(i.Sender, &params)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to DecodeAddress for sender, err=%v", err)
 	}
@@ -875,7 +875,7 @@ func buildForDOGE(i *Ingredient) ([]string, string, error) {
 		msgTx.AddTxIn(txIn)
 	}
 	for i, toAddr := range toAddrArr {
-		toAddress, err := btcutil.DecodeAddress(toAddr, &params)
+		toAddress, err := btcaddr.DecodeAddress(toAddr, &params)
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to DecodeAddress for toAddr, err=%v", err)
 		}
@@ -909,7 +909,7 @@ func buildForDOGE(i *Ingredient) ([]string, string, error) {
 	*/
 
 	//cal txhash
-	senderAddr, err := btcutil.DecodeAddress(i.Sender, &params)
+	senderAddr, err := btcaddr.DecodeAddress(i.Sender, &params)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to DecodeAddress for sender, err=%v", err)
 	}
@@ -1007,7 +1007,7 @@ func buildForSYS(i *Ingredient) ([]string, string, error) {
 		msgTx.AddTxIn(txIn)
 	}
 	for i, toAddr := range toAddrArr {
-		toAddress, err := btcutil.DecodeAddress(toAddr, &params)
+		toAddress, err := btcaddr.DecodeAddress(toAddr, &params)
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to DecodeAddress for toAddr, err=%v", err)
 		}
@@ -1020,7 +1020,7 @@ func buildForSYS(i *Ingredient) ([]string, string, error) {
 	}
 
 	//cal txhash
-	senderAddr, err := btcutil.DecodeAddress(i.Sender, &params)
+	senderAddr, err := btcaddr.DecodeAddress(i.Sender, &params)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to DecodeAddress for sender, err=%v", err)
 	}

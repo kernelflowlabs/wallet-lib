@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/btcsuite/btcd/btcutil/base58"
+	"github.com/btcsuite/btcd/address/v2/base58"
 
 	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
 	chainrpc "github.com/kernelflowlabs/wallet-sdk/rpc"

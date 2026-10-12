@@ -13,7 +13,7 @@ import (
 	"github.com/blocto/solana-go-sdk/program/sysprog"
 	"github.com/blocto/solana-go-sdk/program/tokenprog"
 	"github.com/blocto/solana-go-sdk/types"
-	"github.com/btcsuite/btcd/btcutil/base58"
+	"github.com/btcsuite/btcd/address/v2/base58"
 )
 
 func NewTxBuilder(ti *Ingredient) *TxBuilder {

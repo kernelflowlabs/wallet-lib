@@ -121,7 +121,7 @@ func (c *Client) crossChainStatus(ctx context.Context, in *dexmodel.DexCheckTxIn
 		return nil, fmt.Errorf("ambiguous cross-chain status")
 	}
 	entry := response.Data[0]
-	if !strings.EqualFold(entry.TxHash, in.Hash) || entry.ChainIndex != chain {
+	if !strings.EqualFold(entry.TxHash, in.Hash) || entry.ChainIndex != chain || entry.BridgeID != bridge {
 		return nil, fmt.Errorf("cross-chain status identity mismatch")
 	}
 	result.ProviderStatus = entry.Status

@@ -3,13 +3,15 @@ package utxo
 import (
 	"encoding/hex"
 	"fmt"
+
 	"github.com/kernelflowlabs/wallet-sdk/signing"
 
+	btcaddr "github.com/btcsuite/btcd/address/v2"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/btcutil/v2"
+	"github.com/btcsuite/btcd/chaincfg/v2"
+	"github.com/btcsuite/btcd/txscript/v2"
 )
 
 func PublicKey2Address(publicKey []byte, network string) string {
@@ -21,13 +23,13 @@ func PublicKey2Address(publicKey []byte, network string) string {
 	switch network {
 	case NetworkEnumForBTC, NetworkEnumForBTCP2TR:
 		params = btcParams
-		program := btcutil.Hash160(publicKey)
+		program := btcaddr.Hash160(publicKey)
 		if network == NetworkEnumForBTCP2TR {
 			btcPub, err := schnorr.ParsePubKey(publicKey[1:])
 			if err != nil {
 				return ""
 			}
-			addr, err := btcutil.NewAddressTaproot(
+			addr, err := btcaddr.NewAddressTaproot(
 				schnorr.SerializePubKey(txscript.ComputeTaprootKeyNoScript(btcPub)),
 				&params,
 			)
@@ -36,7 +38,7 @@ func PublicKey2Address(publicKey []byte, network string) string {
 			}
 			address = addr.String()
 		} else {
-			addr, err := btcutil.NewAddressWitnessPubKeyHash(program, &params)
+			addr, err := btcaddr.NewAddressWitnessPubKeyHash(program, &params)
 			if err != nil {
 				return ""
 			}
@@ -45,8 +47,8 @@ func PublicKey2Address(publicKey []byte, network string) string {
 
 	case NetworkEnumForLTC:
 		params = ltcParams
-		program := btcutil.Hash160(publicKey)
-		addr, err := btcutil.NewAddressWitnessPubKeyHash(program, &params)
+		program := btcaddr.Hash160(publicKey)
+		addr, err := btcaddr.NewAddressWitnessPubKeyHash(program, &params)
 		if err != nil {
 			return ""
 		}
@@ -54,8 +56,8 @@ func PublicKey2Address(publicKey []byte, network string) string {
 
 	case NetworkEnumForDOGE:
 		params = dogeParams
-		program := btcutil.Hash160(publicKey)
-		addr, err := btcutil.NewAddressPubKeyHash(program, &params)
+		program := btcaddr.Hash160(publicKey)
+		addr, err := btcaddr.NewAddressPubKeyHash(program, &params)
 		if err != nil {
 			return ""
 		}
@@ -63,8 +65,8 @@ func PublicKey2Address(publicKey []byte, network string) string {
 
 	case NetworkEnumForSYS:
 		params = sysParams
-		program := btcutil.Hash160(publicKey)
-		addr, err := btcutil.NewAddressWitnessPubKeyHash(program, &params)
+		program := btcaddr.Hash160(publicKey)
+		addr, err := btcaddr.NewAddressWitnessPubKeyHash(program, &params)
 		if err != nil {
 			return ""
 		}
@@ -91,8 +93,8 @@ func ValidAddress(address, network string) bool {
 	return false
 }
 
-func decodeAddressForNet(address string, params *chaincfg.Params, allowSegwit bool) (btcutil.Address, error) {
-	addr, err := btcutil.DecodeAddress(address, params)
+func decodeAddressForNet(address string, params *chaincfg.Params, allowSegwit bool) (btcaddr.Address, error) {
+	addr, err := btcaddr.DecodeAddress(address, params)
 	if err != nil {
 		return nil, err
 	}
@@ -100,9 +102,9 @@ func decodeAddressForNet(address string, params *chaincfg.Params, allowSegwit bo
 		return nil, fmt.Errorf("address %s does not belong to this network", address)
 	}
 	switch addr.(type) {
-	case *btcutil.AddressPubKeyHash, *btcutil.AddressScriptHash:
+	case *btcaddr.AddressPubKeyHash, *btcaddr.AddressScriptHash:
 		return addr, nil
-	case *btcutil.AddressWitnessPubKeyHash, *btcutil.AddressWitnessScriptHash, *btcutil.AddressTaproot:
+	case *btcaddr.AddressWitnessPubKeyHash, *btcaddr.AddressWitnessScriptHash, *btcaddr.AddressTaproot:
 		if allowSegwit {
 			return addr, nil
 		}
