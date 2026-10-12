@@ -478,8 +478,6 @@ func (h *Handler) getByteFeeFromBlockcypher(ctx context.Context, chainName strin
 	err = scanApi.Get(ctx, out, path, h.blockcypherQuery())
 	if err != nil {
 		return "", fmt.Errorf("failed to get byteFee, err=%v", err)
-	} else if out == nil {
-		return "", fmt.Errorf("failed to get byteFee, return is nil")
 	}
 	feePerByte := float64(1)
 	if out.MediumFeePerKb != 0 {
@@ -507,8 +505,6 @@ func (h *Handler) getBalanceFromBlockcypher(ctx context.Context, chainName, addr
 	err = scanApi.Get(ctx, res, path, req)
 	if err != nil {
 		return "", fmt.Errorf("failed to get balance from blockcypher, err=%v", err)
-	} else if res == nil {
-		return "", fmt.Errorf("failed to get balance from blockcypher, return is nil")
 	}
 	return strconv.FormatInt(res.FinalBalance, 10), nil
 }
@@ -530,8 +526,6 @@ func (h *Handler) getTxStatusFromBlockcypher(ctx context.Context, chainName, has
 			return result, nil
 		}
 		return nil, fmt.Errorf("failed to get hash status, err=%w", err)
-	} else if res == nil {
-		return nil, fmt.Errorf("failed to get hash status, return nil")
 	} else if res.BlockHeight > 0 &&
 		res.DoubleSpend == false &&
 		res.Confirmations > 0 &&
@@ -560,8 +554,6 @@ func (h *Handler) getUtxoFromBlockcypher(ctx context.Context, chainName, address
 	err = scanApi.Get(ctx, res, path, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get utxo from blockcypher, err=%v", err)
-	} else if res == nil {
-		return nil, fmt.Errorf("failed to get balance from blockcypher, return is nil")
 	}
 
 	utxoList := &signing.UtxoList{}

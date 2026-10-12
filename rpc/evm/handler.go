@@ -164,7 +164,7 @@ func (h *Handler) GetTransfersByHash(ctx context.Context, hash string, confirmat
 	err = h.rpc.CallContext(ctx, tx, "eth_getTransactionByHash", hash)
 	if err != nil {
 		return nil, fmt.Errorf("failed to eth_getTransactionByHash, err=%v", err)
-	} else if tx == nil || tx.Hash == "" {
+	} else if tx.Hash == "" {
 		return nil, fmt.Errorf("failed to eth_getTransactionByHash, tx==nil or empty hash")
 	}
 
@@ -233,7 +233,7 @@ func (h *Handler) CheckTx(ctx context.Context, hash string) (*chainrpc.TxResult,
 	err := h.rpc.CallContext(ctx, tx, "eth_getTransactionByHash", hash)
 	if err != nil {
 		return nil, fmt.Errorf("failed to eth_getTransactionByHash, err=%v", err)
-	} else if tx == nil || tx.Hash == "" {
+	} else if tx.Hash == "" {
 		r.Status = signing.TxStatusPending
 		return r, nil
 	} else if tx.BlockNumber == "" {
@@ -530,7 +530,7 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 		if err != nil {
 			return "", fmt.Errorf("failed to eth_getTransactionByHash, err=%v", err)
 		}
-		if tx != nil && tx.Hash != "" {
+		if tx.Hash != "" {
 			return "true", nil
 		}
 		return "false", nil
