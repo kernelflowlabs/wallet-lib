@@ -18,6 +18,16 @@ func NewTrxTxBuilder() *TrxTxBuilder {
 	}
 }
 
+func NewTrxTxBuilderFromUnsignedHex(unsignedHex string, sender string) (*TrxTxBuilder, error) {
+	txBuilder, err := tron.NewTxBuilderFromUnsignedHex(unsignedHex, sender)
+	if err != nil {
+		return nil, err
+	}
+	return &TrxTxBuilder{
+		in: txBuilder,
+	}, nil
+}
+
 func (b *TrxTxBuilder) SetTxType(txType string) *TrxTxBuilder {
 	b.in.Ingredient.TxType = txType
 	return b
@@ -45,6 +55,11 @@ func (b *TrxTxBuilder) SetAmount(amount string) *TrxTxBuilder {
 
 func (b *TrxTxBuilder) SetFeeLimit(fee string) *TrxTxBuilder {
 	b.in.Ingredient.FeeLimit = fee
+	return b
+}
+
+func (b *TrxTxBuilder) SetPayloadHex(payload string) *TrxTxBuilder {
+	b.in.Ingredient.Payload = strings.TrimPrefix(payload, "0x")
 	return b
 }
 

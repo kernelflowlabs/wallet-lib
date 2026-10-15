@@ -118,6 +118,7 @@ type (
 		Value    string `json:"value,omitempty"`
 		GasPrice string `json:"gasPrice,omitempty"`
 		GasLimit string `json:"gasLimit,omitempty"`
+		FeeLimit string `json:"feeLimit,omitempty"`
 	}
 	DexApproval struct {
 		Token   string `json:"token"`

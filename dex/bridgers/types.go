@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 type FlexibleString string
@@ -280,4 +281,119 @@ type OrderListResponse struct {
 		PageNo   FlexibleString `json:"pageNo"`
 		PageSize FlexibleString `json:"pageSize"`
 	} `json:"data"`
+}
+
+type TronProviderCall struct {
+	Contract    string
+	DataHex     string
+	ValueRaw    string
+	FeeLimitRaw string
+}
+
+type TronProviderTerms struct {
+	Signer              string
+	Recipient           string
+	InputToken          string
+	AmountRaw           string
+	MinimumOutputRaw    string
+	DestinationCoinCode string
+	SlippageFraction    string
+	Router              string
+	MaximumFeeLimitRaw  string
+}
+
+var chainToProvider = map[string]string{
+	"ETH":       "ETH",
+	"BNB":       "BSC",
+	"POLYGON":   "POLYGON",
+	"HECO":      "HECO",
+	"OKEX":      "OKEXCHAIN",
+	"TRX":       "TRON",
+	"FTM":       "FANTOM",
+	"ARB":       "ARBITRUM",
+	"AVAXC":     "AVALANCHE",
+	"OP":        "OPTIMISM",
+	"CRONOS":    "CRONOS",
+	"SOL":       "SOLANA",
+	"APT":       "APT",
+	"ZKSYNC":    "ZKSYNC",
+	"MANTLE":    "MNT",
+	"CORE":      "CORE",
+	"SUI":       "SUI",
+	"CFXEVM":    "CFX",
+	"BASE":      "BASE",
+	"OPBNB":     "opBNB",
+	"ZKEVM":     "zkEVM",
+	"SCROLL":    "SCROLL",
+	"LINEA":     "LINEA",
+	"BLAST":     "Blast",
+	"MERLIN":    "Merlin",
+	"ONCHAIN":   "Onchain",
+	"CELO":      "CELO",
+	"TON":       "TON",
+	"XLAYER":    "XLayer",
+	"APECHAIN":  "APE",
+	"XRP":       "XRP",
+	"BTC":       "BTC",
+	"DOGE":      "DOGE",
+	"LTC":       "LTC",
+	"BCH":       "BCH",
+	"COSMOS":    "COSMOS",
+	"DASH":      "DASH",
+	"ETHF":      "ETHF",
+	"SONIC":     "Sonic",
+	"BERA":      "BERA",
+	"UNICHAIN":  "Unichain",
+	"HYPEEVM":   "HyperEVM",
+	"MORPH":     "Morph",
+	"MON":       "MONAD",
+	"ENI":       "ENI",
+	"KASPLEX":   "Kasplex",
+	"ROBINHOOD": "Robinhood",
+	"MEGAETH":   "MegaETH",
+	"BOTCHAIN":  "BOTCHAIN",
+	"ANUBIS":    "Anubis",
+	"STABLE":    "Stable",
+	"ARC":       "ARC",
+}
+
+var providerToChain = func() map[string]string {
+	m := make(map[string]string, len(chainToProvider))
+	for chain, provider := range chainToProvider {
+		m[strings.ToUpper(provider)] = chain
+	}
+	return m
+}()
+
+var evmProviderChains = map[string]struct{}{
+	"ETH": {}, "BSC": {}, "POLYGON": {}, "HECO": {}, "OKEXCHAIN": {},
+	"FANTOM": {}, "ARBITRUM": {}, "AVALANCHE": {}, "OPTIMISM": {},
+	"CRONOS": {}, "ZKSYNC": {}, "MNT": {}, "CORE": {}, "CFX": {},
+	"BASE": {}, "OPBNB": {}, "ZKEVM": {}, "SCROLL": {}, "LINEA": {},
+	"BLAST": {}, "MERLIN": {}, "ONCHAIN": {}, "CELO": {}, "XLAYER": {},
+	"APE": {}, "ETHF": {}, "SONIC": {}, "BERA": {}, "UNICHAIN": {},
+	"HYPEREVM": {}, "MORPH": {}, "MONAD": {}, "ENI": {}, "KASPLEX": {},
+	"ROBINHOOD": {}, "MEGAETH": {}, "BOTCHAIN": {}, "ANUBIS": {},
+	"STABLE": {}, "ARC": {},
+}
+
+func providerChain(chain string) (string, error) {
+	value, ok := chainToProvider[strings.ToUpper(strings.TrimSpace(chain))]
+	if !ok {
+		return "", fmt.Errorf("unsupported Bridgers chain %q", chain)
+	}
+	return value, nil
+}
+
+func canonicalChain(chain string) string {
+	value := providerToChain[strings.ToUpper(strings.TrimSpace(chain))]
+	if value == "" {
+		return chain
+	}
+	return value
+}
+
+func isEVMProviderChain(chain string) bool {
+	_, ok := evmProviderChains[strings.ToUpper(chain)]
+	return ok
 }

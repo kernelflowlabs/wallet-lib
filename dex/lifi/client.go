@@ -7,6 +7,7 @@ import (
 	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 type Client struct {
@@ -35,7 +36,7 @@ func (c *Client) Chains(ctx context.Context) ([]string, error) {
 	path := "v1/chains"
 
 	query := url.Values{}
-	query.Set("chainTypes", "EVM,UTXO")
+	query.Set("chainTypes", "EVM,UTXO,SVM,MVM,TVM")
 
 	out := &ChainsRes{}
 	err := c.client.Get(ctx, out, path, query)
@@ -45,7 +46,7 @@ func (c *Client) Chains(ctx context.Context) ([]string, error) {
 
 	var res []string
 	for _, v := range out.Chains {
-		if chain, ok := ChainMapper[v.Key]; ok {
+		if chain, ok := idChainMapper[strconv.Itoa(v.ID)]; ok {
 			res = append(res, chain)
 		}
 	}
@@ -84,6 +85,7 @@ func (c *Client) Quote(ctx context.Context, in *dexmodel.DexQuoteIn) (*dexmodel.
 	query.Set("toAddress", req.ToAddress)
 	query.Set("fromAmount", req.FromAmount)
 	query.Set("slippage", req.Slippage)
+	setProviderFilters(query, in.IncludeProvider, in.ExcludeProvider)
 	if c.integrator != "" {
 		query.Set("integrator", c.integrator)
 	}
@@ -106,6 +108,41 @@ func (c *Client) Quote(ctx context.Context, in *dexmodel.DexQuoteIn) (*dexmodel.
 	return res, nil
 }
 
+func setProviderFilters(query url.Values, include, exclude string) {
+	for _, filter := range []struct {
+		list        string
+		bridgeKey   string
+		exchangeKey string
+	}{
+		{include, "allowBridges", "allowExchanges"},
+		{exclude, "denyBridges", "denyExchanges"},
+	} {
+		bridges, exchanges := splitProviderTools(filter.list)
+		if bridges != "" {
+			query.Set(filter.bridgeKey, bridges)
+		}
+		if exchanges != "" {
+			query.Set(filter.exchangeKey, exchanges)
+		}
+	}
+}
+
+func splitProviderTools(list string) (string, string) {
+	var bridges, exchanges []string
+	for _, name := range strings.Split(list, ",") {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			continue
+		}
+		if _, ok := exchangeToolIndex[strings.ToLower(name)]; ok {
+			exchanges = append(exchanges, name)
+			continue
+		}
+		bridges = append(bridges, name)
+	}
+	return strings.Join(bridges, ","), strings.Join(exchanges, ",")
+}
+
 func (c *Client) Status(ctx context.Context, in *dexmodel.DexCheckTxIn) (*dexmodel.DexCheckTxOut, error) {
 	if in == nil {
 		return nil, fmt.Errorf("in is nil")
@@ -118,14 +155,14 @@ func (c *Client) Status(ctx context.Context, in *dexmodel.DexCheckTxIn) (*dexmod
 	query := url.Values{}
 	query.Set("txHash", in.Hash)
 	if in.FromChain != "" {
-		fromChainID, ok := idChainMapperReverse[in.FromChain]
+		fromChainID, ok := chainID(in.FromChain)
 		if !ok {
 			return nil, fmt.Errorf("invalid fromChain")
 		}
 		query.Set("fromChain", fromChainID)
 	}
 	if in.ToChain != "" {
-		toChainID, ok := idChainMapperReverse[in.ToChain]
+		toChainID, ok := chainID(in.ToChain)
 		if !ok {
 			return nil, fmt.Errorf("invalid toChain")
 		}

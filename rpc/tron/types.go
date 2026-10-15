@@ -167,3 +167,25 @@ type (
 		} `json:"block_header"`
 	}
 )
+
+type (
+	GetChainParametersOut struct {
+		ChainParameter []struct {
+			Key   string `json:"key"`
+			Value int64  `json:"value"`
+		} `json:"chainParameter"`
+	}
+	ChainParameters struct {
+		EnergyFeeSun                string `json:"energyFeeSun"`
+		TransactionFeeSun           string `json:"transactionFeeSun"`
+		MaxFeeLimitSun              string `json:"maxFeeLimitSun"`
+		CreateAccountFeeSun         string `json:"createAccountFeeSun"`
+		ContractCreateAccountFeeSun string `json:"contractCreateAccountFeeSun"`
+	}
+	AccountActivation struct {
+		Address                string `json:"address"`
+		Activated              bool   `json:"activated"`
+		NativeTransferFeeSun   string `json:"nativeTransferFeeSun"`
+		ContractTransferFeeSun string `json:"contractTransferFeeSun"`
+	}
+)

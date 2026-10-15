@@ -67,6 +67,41 @@ func ConvertToHex(address string) string {
 	return h
 }
 
+const (
+	EnergyFeeSun            = 100
+	ProtocolMaxFeeLimitSun  = 15_000_000_000
+	MaxFeeLimitSun          = 300_000_000
+	DefaultFeeLimitHeadroom = 2
+)
+
+func FeeLimitFromSun(sun, headroom int64) (int64, bool) {
+	if sun <= 0 || headroom <= 0 || headroom > 100 {
+		return 0, false
+	}
+	if sun > MaxFeeLimitSun/headroom {
+		return MaxFeeLimitSun, true
+	}
+	return sun * headroom, true
+}
+
+func FeeLimitForEnergy(energy, headroom int64) (int64, bool) {
+	return FeeLimitForEnergyAt(energy, EnergyFeeSun, headroom)
+}
+
+func FeeLimitForEnergyAt(energy, energyFeeSun, headroom int64) (int64, bool) {
+	if energy <= 0 || energyFeeSun <= 0 || energy > ProtocolMaxFeeLimitSun/energyFeeSun {
+		return 0, false
+	}
+	return FeeLimitFromSun(energy*energyFeeSun, headroom)
+}
+
+func normalizeAddressHex(address string) string {
+	if len(address) == 34 && ValidAddress(address) {
+		return ConvertToHex(address)
+	}
+	return address
+}
+
 func ConvertFromHex(hexAddress string) string {
 	b, err := hex.DecodeString(hexAddress)
 	if err != nil || len(b) == 0 {

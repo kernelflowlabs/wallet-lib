@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 
 	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
+	"github.com/kernelflowlabs/wallet-sdk/signing/tron"
 	"github.com/shopspring/decimal"
 )
 
@@ -245,12 +247,12 @@ func (c *Client) toSocketQuoteReq(in *dexmodel.DexQuoteIn) (*QuoteRequest, error
 	var fromChainId string
 	if in.FromChain != "" {
 		var ok bool
-		fromChainId, ok = idChainMapperReverse[in.FromChain]
+		fromChainId, ok = chainID(in.FromChain)
 		if !ok {
 			return nil, fmt.Errorf("invalid fromChain: %s", in.FromChain)
 		}
 	}
-	toChainId, ok := idChainMapperReverse[in.ToChain]
+	toChainId, ok := chainID(in.ToChain)
 	if !ok {
 		return nil, fmt.Errorf("invalid toChain: %s", in.ToChain)
 	}
@@ -356,6 +358,23 @@ func (c *Client) toStandardQuoteRes(res *QuoteOut) *dexmodel.DexQuoteOut {
 			ExpiresAt:         rt.ExpiresAt,
 		}
 		switch rt.TxData.Kind {
+		case tronTxKind:
+			var obj evmTxObject
+			if err := json.Unmarshal(rt.TxData.Object, &obj); err != nil {
+				continue
+			}
+			to := tronAddress(obj.To)
+			feeLimit := tronFeeLimitSun(rt.GasFee)
+			if to == "" || !strings.HasPrefix(obj.Data, "0x") || len(obj.Data) <= 2 || feeLimit == "" {
+				continue
+			}
+			value := string(obj.Value)
+			if value == "0" {
+				value = ""
+			}
+			route.GasLimit = ""
+			route.TxData = &dexmodel.DexTx{To: to, Data: obj.Data, Value: value, FeeLimit: feeLimit}
+			route.UserOp = tronTxKind
 		case "", "evm_tx":
 			var obj evmTxObject
 			if err := json.Unmarshal(rt.TxData.Object, &obj); err == nil && obj.To != "" {
@@ -374,19 +393,61 @@ func (c *Client) toStandardQuoteRes(res *QuoteOut) *dexmodel.DexQuoteOut {
 			}
 		}
 		if rt.Approval != nil && rt.Approval.SpenderAddress != "" {
-			route.ApprovalData = &dexmodel.DexApproval{
-				Token:   rt.Approval.TokenAddress,
-				Spender: rt.Approval.SpenderAddress,
-				Amount:  rt.Approval.Amount,
+			token, spender := rt.Approval.TokenAddress, rt.Approval.SpenderAddress
+			if route.UserOp == tronTxKind {
+				token, spender = tronAddress(token), tronAddress(spender)
 			}
-			route.TrustedSpenders = append(route.TrustedSpenders, rt.Approval.SpenderAddress)
+			if token != "" && spender != "" {
+				route.ApprovalData = &dexmodel.DexApproval{
+					Token:   token,
+					Spender: spender,
+					Amount:  rt.Approval.Amount,
+				}
+				route.TrustedSpenders = append(route.TrustedSpenders, spender)
+			}
 		}
 		out.Routes = append(out.Routes, route)
 	}
 	return out
 }
 
+const tronTxKind = "tron_tx"
+
+func tronAddress(address string) string {
+	address = strings.TrimSpace(address)
+	if len(address) == 34 && tron.ValidAddress(address) {
+		return address
+	}
+	payload := strings.TrimPrefix(strings.TrimPrefix(address, "0x"), "0X")
+	if len(payload) != 40 {
+		return ""
+	}
+	converted := tron.ConvertFromHex("41" + payload)
+	if len(converted) != 34 || !tron.ValidAddress(converted) {
+		return ""
+	}
+	return converted
+}
+
+func tronFeeLimitSun(fee GasFee) string {
+	sun, err := strconv.ParseInt(strings.TrimSpace(string(fee.EstimatedFee)), 10, 64)
+	if err != nil || sun <= 0 {
+		limit, limitErr := strconv.ParseInt(strings.TrimSpace(string(fee.GasLimit)), 10, 64)
+		price, priceErr := strconv.ParseInt(strings.TrimSpace(string(fee.GasPrice)), 10, 64)
+		if limitErr != nil || priceErr != nil || limit <= 0 || price <= 0 || limit > tron.ProtocolMaxFeeLimitSun/price {
+			return ""
+		}
+		sun = limit * price
+	}
+	feeLimit, ok := tron.FeeLimitFromSun(sun, tron.DefaultFeeLimitHeadroom)
+	if !ok {
+		return ""
+	}
+	return strconv.FormatInt(feeLimit, 10)
+}
+
 var idChainMapper = map[string]string{
+	"728126428":  "TRX",
 	"1":          "ETH",
 	"56":         "BNB",
 	"89999":      "SOL",
@@ -435,6 +496,11 @@ var idChainMapper = map[string]string{
 	"4663":       "ROBINHOOD",
 	"130":        "UNICHAIN",
 	"57073":      "INK",
+}
+
+func chainID(chain string) (string, bool) {
+	id, ok := idChainMapperReverse[strings.ToUpper(strings.TrimSpace(chain))]
+	return id, ok
 }
 
 var idChainMapperReverse = func() map[string]string {

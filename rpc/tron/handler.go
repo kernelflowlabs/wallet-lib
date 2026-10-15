@@ -306,6 +306,26 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 			return "", fmt.Errorf("failed to Marshal for res, err=%v", err)
 		}
 		return string(resBytes), nil
+	case "getChainParameters":
+		res, err := h.GetChainParameters(ctx)
+		if err != nil {
+			return "", fmt.Errorf("failed to GetChainParameters, err=%v", err)
+		}
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			return "", fmt.Errorf("failed to Marshal for res, err=%v", err)
+		}
+		return string(resBytes), nil
+	case "getAccountActivation":
+		res, err := h.GetAccountActivation(ctx, params)
+		if err != nil {
+			return "", fmt.Errorf("failed to GetAccountActivation, err=%v", err)
+		}
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			return "", fmt.Errorf("failed to Marshal for res, err=%v", err)
+		}
+		return string(resBytes), nil
 	case "getBlockByNumber":
 		blockNumberUint64, err := strconv.ParseUint(params, 10, 64)
 		if err != nil {
@@ -441,6 +461,59 @@ func (h *Handler) getBlockByNumber(ctx context.Context, num uint64) (*Block, err
 	}
 	return &blocks.Blocks[0], nil
 }
+func (h *Handler) GetChainParameters(ctx context.Context) (*ChainParameters, error) {
+	out := &GetChainParametersOut{}
+	if err := h.rpc.Post(ctx, out, "wallet/getchainparameters", struct{}{}); err != nil {
+		return nil, err
+	}
+	if len(out.ChainParameter) == 0 {
+		return nil, fmt.Errorf("empty chainParameter")
+	}
+	res := &ChainParameters{}
+	for _, p := range out.ChainParameter {
+		switch p.Key {
+		case "getEnergyFee":
+			res.EnergyFeeSun = strconv.FormatInt(p.Value, 10)
+		case "getTransactionFee":
+			res.TransactionFeeSun = strconv.FormatInt(p.Value, 10)
+		case "getMaxFeeLimit":
+			res.MaxFeeLimitSun = strconv.FormatInt(p.Value, 10)
+		case "getCreateAccountFee":
+			res.CreateAccountFeeSun = strconv.FormatInt(p.Value, 10)
+		case "getCreateNewAccountFeeInSystemContract":
+			res.ContractCreateAccountFeeSun = strconv.FormatInt(p.Value, 10)
+		}
+	}
+	if res.EnergyFeeSun == "" {
+		return nil, fmt.Errorf("getEnergyFee missing from chainParameter")
+	}
+	return res, nil
+}
+
+func (h *Handler) GetAccountActivation(ctx context.Context, address string) (*AccountActivation, error) {
+	if !wallettron.ValidAddress(address) || len(address) != 34 {
+		return nil, fmt.Errorf("invalid TRON address")
+	}
+	out := &GetAccountRes{}
+	if err := h.rpc.Post(ctx, out, "wallet/getaccount", &GetAccountReq{Address: wallettron.ConvertToHex(address)}); err != nil {
+		return nil, err
+	}
+	res := &AccountActivation{Address: address, Activated: out.Address != "" || out.CreateTime > 0}
+	if res.Activated {
+		return res, nil
+	}
+	params, err := h.GetChainParameters(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if params.CreateAccountFeeSun == "" || params.ContractCreateAccountFeeSun == "" {
+		return nil, fmt.Errorf("account creation fees missing from chainParameter")
+	}
+	res.NativeTransferFeeSun = params.CreateAccountFeeSun
+	res.ContractTransferFeeSun = params.ContractCreateAccountFeeSun
+	return res, nil
+}
+
 func (h *Handler) getAccountResource(ctx context.Context, address string) (*GetAccountResourceOut, error) {
 	out := &GetAccountResourceOut{}
 	err := h.rpc.Post(ctx, out, "wallet/getaccountresource",

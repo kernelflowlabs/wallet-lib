@@ -13,10 +13,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
 	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
+	"github.com/kernelflowlabs/wallet-sdk/signing/tron"
 	"github.com/shopspring/decimal"
+	"strconv"
 )
 
 const Channel = "bridgers"
@@ -104,6 +108,13 @@ func (c *Client) Tokens(ctx context.Context, chain string) (*TokenListResponse, 
 			return nil, err
 		}
 	}
+	return c.tokensByProvider(ctx, providerName)
+}
+
+func (c *Client) tokensByProvider(ctx context.Context, providerName string) (*TokenListResponse, error) {
+	if c == nil || c.client == nil {
+		return nil, fmt.Errorf("Bridgers client is nil")
+	}
 	response := &TokenListResponse{}
 	if err := c.client.Post(ctx, response, "api/exchangeRecord/getToken", &TokenListRequest{Chain: providerName}); err != nil {
 		return response, fmt.Errorf("get Bridgers tokens: %w", err)
@@ -114,7 +125,7 @@ func (c *Client) Tokens(ctx context.Context, chain string) (*TokenListResponse, 
 	if providerName != "" {
 		response.Data.Tokens = tokensForChain(response.Data.Tokens, providerName)
 		if len(response.Data.Tokens) == 0 {
-			all, err := c.Tokens(ctx, "")
+			all, err := c.tokensByProvider(ctx, "")
 			if err != nil {
 				return response, err
 			}
@@ -288,7 +299,7 @@ func (c *Client) Quote(ctx context.Context, in *dexmodel.DexQuoteIn) (*dexmodel.
 	if !ok || quotedAmount.Sign() <= 0 {
 		return nil, fmt.Errorf("Bridgers amountOutMin must be a positive raw integer")
 	}
-	if !common.IsHexAddress(quote.ContractAddress) {
+	if (fromChain == "TRON" && !validTronAccount(quote.ContractAddress)) || (fromChain != "TRON" && !common.IsHexAddress(quote.ContractAddress)) {
 		return nil, fmt.Errorf("Bridgers quote returned an invalid contract address")
 	}
 	fromCoinCode, toCoinCode, err := c.resolveCoinCodes(ctx, in, fromChain, toChain)
@@ -316,7 +327,25 @@ func (c *Client) Quote(ctx context.Context, in *dexmodel.DexQuoteIn) (*dexmodel.
 	if err != nil {
 		return nil, err
 	}
-	tx, err := standardTransaction(swapResponse.Data.TxData, quote.ContractAddress)
+	var tx *dexmodel.DexTx
+	if fromChain == "TRON" {
+		var call TronProviderCall
+		call, err = DecodeBridgersTronCall(swapResponse.Data.TxData, TronProviderTerms{
+			Signer: in.FromAddress, Recipient: in.ToAddress, InputToken: in.FromToken,
+			AmountRaw: in.FromAmount, MinimumOutputRaw: quote.AmountOutMin,
+			DestinationCoinCode: toCoinCode, SlippageFraction: slippageFraction,
+			Router: quote.ContractAddress, MaximumFeeLimitRaw: strconv.FormatInt(tron.MaxFeeLimitSun, 10),
+		})
+		if err == nil {
+			value := call.ValueRaw
+			if value == "0" {
+				value = ""
+			}
+			tx = &dexmodel.DexTx{To: call.Contract, Data: call.DataHex, Value: value, FeeLimit: call.FeeLimitRaw}
+		}
+	} else {
+		tx, err = standardTransaction(swapResponse.Data.TxData, quote.ContractAddress)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -419,7 +448,7 @@ func (c *Client) standardQuoteRequest(in *dexmodel.DexQuoteIn) (*QuoteRequest, d
 	if err != nil {
 		return nil, decimal.Zero, "", "", "", err
 	}
-	if !isEVMProviderChain(fromChain) {
+	if !isEVMProviderChain(fromChain) && fromChain != "TRON" {
 		return nil, decimal.Zero, "", "", "", fmt.Errorf("Bridgers standard Quote supports EVM source transactions only; use QuoteRaw and Swap for %s", fromChain)
 	}
 	toChain, err := providerChain(in.ToChain)
@@ -429,11 +458,18 @@ func (c *Client) standardQuoteRequest(in *dexmodel.DexQuoteIn) (*QuoteRequest, d
 	if in.FromToken == "" || in.ToToken == "" || in.FromAddress == "" || in.ToAddress == "" {
 		return nil, decimal.Zero, "", "", "", fmt.Errorf("fromToken, toToken, fromAddress, and toAddress are required")
 	}
-	if !common.IsHexAddress(in.FromAddress) {
+	if fromChain == "TRON" {
+		if !validTronAccount(in.FromAddress) || (!isNativeToken(in.FromToken) && !validTronAccount(in.FromToken)) {
+			return nil, decimal.Zero, "", "", "", fmt.Errorf("invalid TRON source address or token")
+		}
+	} else if !common.IsHexAddress(in.FromAddress) {
 		return nil, decimal.Zero, "", "", "", fmt.Errorf("invalid EVM fromAddress")
 	}
-	if !isNativeToken(in.FromToken) && !common.IsHexAddress(in.FromToken) {
+	if fromChain != "TRON" && !isNativeToken(in.FromToken) && !common.IsHexAddress(in.FromToken) {
 		return nil, decimal.Zero, "", "", "", fmt.Errorf("invalid EVM fromToken")
+	}
+	if toChain == "TRON" && (!validTronAccount(in.ToAddress) || (!isNativeToken(in.ToToken) && !validTronAccount(in.ToToken))) {
+		return nil, decimal.Zero, "", "", "", fmt.Errorf("invalid TRON destination address or token")
 	}
 	if isEVMProviderChain(toChain) {
 		if !isNativeToken(in.ToToken) && !common.IsHexAddress(in.ToToken) {
@@ -620,6 +656,126 @@ func standardTransaction(raw json.RawMessage, contractAddress string) (*dexmodel
 	return &dexmodel.DexTx{To: transaction.To, Data: transaction.Data, Value: value}, nil
 }
 
+func DecodeBridgersTronCall(raw []byte, terms TronProviderTerms) (TronProviderCall, error) {
+	invalid := func() (TronProviderCall, error) {
+		return TronProviderCall{}, errors.New("Bridgers TRON call does not match quote")
+	}
+	if len(raw) == 0 || len(raw) > 65536 || !validTronAccount(terms.Signer) || strings.TrimSpace(terms.Recipient) == "" || !validTronAccount(terms.Router) {
+		return invalid()
+	}
+	amount, amountOK := new(big.Int).SetString(terms.AmountRaw, 10)
+	minimum, minimumOK := new(big.Int).SetString(terms.MinimumOutputRaw, 10)
+	maxFee, maxFeeOK := new(big.Int).SetString(terms.MaximumFeeLimitRaw, 10)
+	if !amountOK || !minimumOK || !maxFeeOK || amount.Sign() <= 0 || minimum.Sign() <= 0 || maxFee.Sign() <= 0 || amount.BitLen() > 256 || minimum.BitLen() > 256 || !maxFee.IsInt64() || strings.TrimSpace(terms.DestinationCoinCode) == "" || terms.SlippageFraction == "" {
+		return invalid()
+	}
+	var response struct {
+		Router   string `json:"tronRouterAddrees"`
+		Function string `json:"functionName"`
+		From     string `json:"fromAddress"`
+		To       string `json:"to"`
+		Options  struct {
+			FeeLimit  json.Number `json:"feeLimit"`
+			CallValue string      `json:"callValue"`
+		} `json:"options"`
+		Parameters []struct {
+			Type  string `json:"type"`
+			Value string `json:"value"`
+		} `json:"parameter"`
+	}
+	if json.Unmarshal(raw, &response) != nil || response.To != terms.Router || !strings.EqualFold(response.Router, tron.ConvertToHex(terms.Router)) || !strings.EqualFold(response.From, tron.ConvertToHex(terms.Signer)) {
+		return invalid()
+	}
+	fee, ok := new(big.Int).SetString(response.Options.FeeLimit.String(), 10)
+	value, valueOK := parseTronProviderInteger(response.Options.CallValue)
+	if !ok || fee.Sign() <= 0 || fee.Cmp(maxFee) > 0 || !valueOK || !value.IsInt64() {
+		return invalid()
+	}
+	native := isNativeToken(terms.InputToken)
+	wantFunction := "swap(address,string,string,uint256,uint256)"
+	types := []string{"address", "string", "string", "uint256", "uint256"}
+	if native {
+		wantFunction = "swapEth(string,string,uint256)"
+		types = []string{"string", "string", "uint256"}
+		if value.Cmp(amount) != 0 {
+			return invalid()
+		}
+	} else if !validTronAccount(terms.InputToken) || value.Sign() != 0 {
+		return invalid()
+	}
+	if response.Function != wantFunction || len(response.Parameters) != len(types) {
+		return invalid()
+	}
+	args := make(abi.Arguments, len(types))
+	values := make([]any, len(types))
+	stringIndex := 0
+	for i, kind := range types {
+		p := response.Parameters[i]
+		if p.Type != kind {
+			return invalid()
+		}
+		t, err := abi.NewType(kind, "", nil)
+		if err != nil {
+			return invalid()
+		}
+		args[i] = abi.Argument{Type: t}
+		switch kind {
+		case "address":
+			if p.Value != terms.InputToken {
+				return invalid()
+			}
+			encoded := tron.ConvertToHex(p.Value)
+			if len(encoded) != 42 {
+				return invalid()
+			}
+			values[i] = common.HexToAddress(encoded[2:])
+		case "string":
+			if stringIndex == 0 {
+				parts := strings.Split(p.Value, "|")
+				if len(p.Value) > 512 || len(parts) != 5 || parts[0] != terms.DestinationCoinCode || strings.TrimSpace(parts[1]) == "" || parts[2] != terms.SlippageFraction || parts[3] != "bridgers" || parts[4] != "0" {
+					return invalid()
+				}
+			} else if p.Value != terms.Recipient {
+				return invalid()
+			}
+			stringIndex++
+			values[i] = p.Value
+		case "uint256":
+			number, ok := parseTronProviderInteger(p.Value)
+			if !ok {
+				return invalid()
+			}
+			expected := minimum
+			if !native && i == 3 {
+				expected = amount
+			}
+			if number.Cmp(expected) != 0 {
+				return invalid()
+			}
+			values[i] = number
+		}
+	}
+	packed, err := args.Pack(values...)
+	if err != nil {
+		return invalid()
+	}
+	data := append(crypto.Keccak256([]byte(wantFunction))[:4], packed...)
+	return TronProviderCall{Contract: terms.Router, DataHex: "0x" + hex.EncodeToString(data), ValueRaw: value.String(), FeeLimitRaw: fee.String()}, nil
+}
+
+func parseTronProviderInteger(raw string) (*big.Int, bool) {
+	base := 10
+	if strings.HasPrefix(raw, "0x") {
+		raw, base = raw[2:], 16
+	}
+	value, ok := new(big.Int).SetString(raw, base)
+	return value, ok && value.Sign() >= 0 && value.BitLen() <= 256
+}
+
+func validTronAccount(address string) bool {
+	return len(address) == 34 && tron.ValidAddress(address)
+}
+
 func decimalValue(value string) (string, error) {
 	value = strings.TrimSpace(value)
 	if value == "" {
@@ -797,7 +953,7 @@ func (c *Client) cachedTokens(ctx context.Context, chain string) ([]Token, error
 	c.tokenLoads[chain] = loading
 	c.tokenMu.Unlock()
 
-	response, err := c.Tokens(ctx, chain)
+	response, err := c.tokensByProvider(ctx, chain)
 	var tokens []Token
 	if err == nil {
 		tokens = append([]Token(nil), response.Data.Tokens...)

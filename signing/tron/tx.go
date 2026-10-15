@@ -1,13 +1,16 @@
 package tron
 
 import (
-	"github.com/kernelflowlabs/wallet-sdk/contracts/trc20"
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/kernelflowlabs/wallet-sdk/contracts/trc20"
 	"github.com/kernelflowlabs/wallet-sdk/crypto/key"
 	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"io"
 	"strconv"
 	"strings"
 )
@@ -16,6 +19,49 @@ func NewTxBuilder(ti *Ingredient) *TxBuilder {
 	return &TxBuilder{
 		Ingredient: ti,
 	}
+}
+
+func NewTxBuilderFromUnsignedHex(unsignedHex, sender string) (*TxBuilder, error) {
+	invalid := errors.New("invalid prepared TRON contract transaction")
+	if len(unsignedHex) == 0 || len(unsignedHex) > 65536 || !ValidAddress(sender) {
+		return nil, invalid
+	}
+	raw, err := hex.DecodeString(unsignedHex)
+	if err != nil {
+		return nil, invalid
+	}
+	var tx NativeTx
+	d := json.NewDecoder(bytes.NewReader(raw))
+	d.DisallowUnknownFields()
+	if d.Decode(&tx) != nil || d.Decode(new(any)) != io.EOF || len(tx.Signature) != 0 || len(tx.Ret) != 0 || tx.RawData == nil {
+		return nil, invalid
+	}
+	r := tx.RawData
+	if len(r.Contracts) != 1 || r.Contracts[0] == nil || r.Timestamp <= 0 || r.Expiration <= r.Timestamp || r.Expiration-r.Timestamp > 86400000 || r.FeeLimit <= 0 || r.FeeLimit > 1_000_000_000 {
+		return nil, invalid
+	}
+	c := r.Contracts[0]
+	v := c.Parameter.Value
+	ownerHex := normalizeAddressHex(v.OwnerAddress)
+	contractHex := normalizeAddressHex(v.ContractAddress)
+	if c.Type != "TriggerSmartContract" || c.Parameter.TypeUrl != "type.googleapis.com/protocol.TriggerSmartContract" || !strings.EqualFold(ownerHex, ConvertToHex(sender)) || v.ToAddress != "" || v.CallValue < 0 || (v.Amount != 0 && v.Amount != v.CallValue) {
+		return nil, invalid
+	}
+	owner, e1 := hex.DecodeString(ownerHex)
+	contract, e2 := hex.DecodeString(contractHex)
+	data, e3 := hex.DecodeString(v.Data)
+	refBytes, e4 := hex.DecodeString(r.RefBlockBytes)
+	refHash, e5 := hex.DecodeString(r.RefBlockHash)
+	if e1 != nil || e2 != nil || e3 != nil || e4 != nil || e5 != nil || len(owner) != 21 || owner[0] != 0x41 || len(contract) != 21 || contract[0] != 0x41 || len(data) < 4 || len(refBytes) != 2 || len(refHash) != 8 {
+		return nil, invalid
+	}
+	value := marshalTriggerSmartContract(owner, contract, data, v.CallValue)
+	protobuf := marshalRawTx(marshalContract(contractTypeTriggerSmart, marshalAny(c.Parameter.TypeUrl, value)), refBytes, refHash, r.Timestamp, r.Expiration, r.FeeLimit)
+	digest := sha256.Sum256(protobuf)
+	if tx.ID != hex.EncodeToString(digest[:]) {
+		return nil, invalid
+	}
+	return &TxBuilder{unsignedHex: unsignedHex, sigHash: []string{tx.ID}}, nil
 }
 
 func (tx *TxBuilder) Build() error {
@@ -276,9 +322,11 @@ type (
 		ContractRet string `json:"contractRet"`
 	}
 	NativeTx struct {
-		Signature []string `json:"signature,omitempty"`
-		ID        string   `json:"txID,omitempty"`
-		RawData   *TxRaw   `json:"raw_data,omitempty"`
-		Ret       []TxRet  `json:"ret,omitempty"`
+		Signature  []string `json:"signature,omitempty"`
+		ID         string   `json:"txID,omitempty"`
+		RawData    *TxRaw   `json:"raw_data,omitempty"`
+		RawDataHex string   `json:"raw_data_hex,omitempty"`
+		Visible    bool     `json:"visible,omitempty"`
+		Ret        []TxRet  `json:"ret,omitempty"`
 	}
 )

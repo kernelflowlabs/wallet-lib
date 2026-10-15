@@ -3,9 +3,11 @@ package lifi
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	utils "github.com/kernelflowlabs/wallet-sdk/common/bigdec"
 	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
+	"github.com/kernelflowlabs/wallet-sdk/signing/tron"
 	"strconv"
 	"strings"
 
@@ -101,13 +103,17 @@ type (
 			ApprovalAddress string `json:"approvalAddress"`
 		} `json:"estimate"`
 		TransactionRequest struct {
-			To       string `json:"to"`
-			Data     string `json:"data"`
-			Value    string `json:"value"`
-			From     string `json:"from,omitempty"`
-			ChainID  int    `json:"chainId,omitempty"`
-			GasPrice string `json:"gasPrice,omitempty"`
-			GasLimit string `json:"gasLimit,omitempty"`
+			To         string `json:"to"`
+			Data       string `json:"data"`
+			Value      string `json:"value"`
+			From       string `json:"from,omitempty"`
+			ChainID    int    `json:"chainId,omitempty"`
+			GasPrice   string `json:"gasPrice,omitempty"`
+			GasLimit   string `json:"gasLimit,omitempty"`
+			CustomData struct {
+				ContractType    string          `json:"contractType"`
+				TronTransaction json.RawMessage `json:"tronTransaction"`
+			} `json:"customData,omitempty"`
 		} `json:"transactionRequest"`
 	}
 	StatusRes struct {
@@ -131,11 +137,11 @@ type (
 
 func (c *Client) toLifiQuoteReq(in *dexmodel.DexQuoteIn) *QuoteReq {
 	adjustNativeToken(in)
-	fromChain, ok := idChainMapperReverse[in.FromChain]
+	fromChain, ok := chainID(in.FromChain)
 	if !ok {
 		return nil
 	}
-	toChain, ok := idChainMapperReverse[in.ToChain]
+	toChain, ok := chainID(in.ToChain)
 	if !ok {
 		return nil
 	}
@@ -208,14 +214,27 @@ func (c *Client) toStandardQuoteRes(res *QuoteRes) *dexmodel.DexQuoteOut {
 	}
 
 	var txData *dexmodel.DexTx
+	var userOp string
 	if res.TransactionRequest.To != "" || res.TransactionRequest.Data != "" {
 		chain, ok := idChainMapper[strconv.Itoa(res.Action.FromChainID)]
 		if !ok {
 			return nil
 		}
 
-		var data, value, gasPrice, gasLimit string
-		if chain == "BTC" {
+		var data, value, gasPrice, gasLimit, feeLimit string
+		if chain == "TRX" {
+			if res.TransactionRequest.CustomData.ContractType != "TriggerSmartContract" ||
+				len(res.TransactionRequest.CustomData.TronTransaction) == 0 {
+				return nil
+			}
+			data = hex.EncodeToString(res.TransactionRequest.CustomData.TronTransaction)
+			feeLimit = utils.HexToDecimal(res.TransactionRequest.GasLimit)
+			stated, err := strconv.ParseInt(feeLimit, 10, 64)
+			if err != nil || stated <= 0 || stated > tron.MaxFeeLimitSun {
+				return nil
+			}
+			userOp = tronUserOp
+		} else if chain == "BTC" {
 			data = res.TransactionRequest.Data
 			if res.TransactionRequest.Value != "" && res.TransactionRequest.Value != "0" {
 				value = res.TransactionRequest.Value
@@ -248,6 +267,7 @@ func (c *Client) toStandardQuoteRes(res *QuoteRes) *dexmodel.DexQuoteOut {
 			Value:    value,
 			GasPrice: gasPrice,
 			GasLimit: gasLimit,
+			FeeLimit: feeLimit,
 		}
 	}
 
@@ -285,6 +305,7 @@ func (c *Client) toStandardQuoteRes(res *QuoteRes) *dexmodel.DexQuoteOut {
 		FeeInUsd:          fmt.Sprintf("%.2f", totalFeeUsd),
 		EstimatedTime:     res.Estimate.ExecutionDuration,
 		NeedBuild:         false,
+		UserOp:            userOp,
 		TxData:            txData,
 		ApprovalData:      approvalData,
 		TrustedSpenders:   trusted,
@@ -296,27 +317,20 @@ func (c *Client) toStandardQuoteRes(res *QuoteRes) *dexmodel.DexQuoteOut {
 	}
 }
 
-var ChainMapper = map[string]string{
-	"eth": "ETH",
-	"arb": "ARB",
-	"bas": "BASE",
-	"hpl": "HYPE",
-	"hyp": "HYPEEVM",
-	"mon": "MON",
-	"bsc": "BNB",
-	"opt": "OP",
-	"pol": "POLYGON",
-	"ava": "AVAXC",
-	"lna": "LINEA",
-	"btc": "BTC",
-	"sol": "SOL",
-	"sui": "SUI",
+const tronUserOp = "tron_tx"
+
+var ExchangeTools = []string{
+	"1inch", "aftermath", "bebop", "bitget", "bluefin7k", "cetus", "dflow", "dodo", "eisen", "enso",
+	"fly", "gluex", "hyperbloom", "hyperflow", "hyperliquidSpotDex", "hypertrade", "jupiter",
+	"kumbaya", "kuru", "kyberswap", "lifiIntentsDex", "lifidexaggregator", "liquidswap", "merkle",
+	"momentum", "monorail", "nexroute", "nordstern", "okx", "openocean", "paraswap", "peach",
+	"rialto", "soroswap", "sunswap", "supersetDex", "sushiswap", "titan",
 }
 
-var ChainMapperReverse = func() map[string]string {
-	m := make(map[string]string, len(ChainMapper))
-	for k, v := range ChainMapper {
-		m[v] = k
+var exchangeToolIndex = func() map[string]struct{} {
+	m := make(map[string]struct{}, len(ExchangeTools))
+	for _, name := range ExchangeTools {
+		m[strings.ToLower(name)] = struct{}{}
 	}
 	return m
 }()
@@ -328,6 +342,10 @@ func parseFloat(s string) float64 {
 }
 
 var idChainMapper = map[string]string{
+	"143":              "MON",
+	"999":              "HYPEEVM",
+	"1337":             "HYPE",
+	"728126428":        "TRX",
 	"1":                "ETH",
 	"56":               "BNB",
 	"137":              "POLYGON",
@@ -377,6 +395,11 @@ var idChainMapper = map[string]string{
 	"20000000000001":   "BTC",
 	"1151111081099710": "SOL",
 	"9270000000000000": "SUI",
+}
+
+func chainID(chain string) (string, bool) {
+	id, ok := idChainMapperReverse[strings.ToUpper(strings.TrimSpace(chain))]
+	return id, ok
 }
 
 var idChainMapperReverse = func() map[string]string {
