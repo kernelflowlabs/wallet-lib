@@ -14,3 +14,15 @@ remove the root requirement merely because `go mod tidy` proposes doing so;
 ordinary builds use module graph pruning and do not expose the gomobile
 temporary-module conflict. Validate dependency changes with both the full-chain
 and reduced-chain mobile builds.
+
+## Release flavors
+
+Mobile releases publish Full and Lite flavors for both Android and iOS. Full
+contains every supported chain. Lite uses the explicit chain list in the
+release workflow and currently contains EVM, Solana, and Tron. Adding a chain
+to Full does not add it to Lite; the Lite list must be changed intentionally.
+
+The release assets are `wallet_mobile_full.aar`, `wallet_mobile_lite.aar`,
+`WalletMobile_full.xcframework.zip`, and
+`WalletMobile_lite.xcframework.zip`. App builds should use the Lite assets.
+The previous unsuffixed and `evm_sol` asset names are retired.

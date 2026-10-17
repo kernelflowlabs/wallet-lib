@@ -3,13 +3,12 @@ name: Release mobile binaries
 # Manually dispatched against an existing v* tag; publishes gomobile bindings
 # as GitHub Release assets in two flavors, so consumers can download and
 # checksum-verify the one they need:
-#   wallet_mobile.aar                    Android AAR, all chains
-#   wallet_mobile_evm_sol.aar            Android AAR, evm + sol only (smaller)
-#   WalletMobile.xcframework.zip         iOS xcframework, all chains
-#   WalletMobile_evm_sol.xcframework.zip iOS xcframework, evm + sol only
+#   wallet_mobile_full.aar               Android AAR, all chains
+#   wallet_mobile_lite.aar               Android AAR, selected app chains
+#   WalletMobile_full.xcframework.zip    iOS xcframework, all chains
+#   WalletMobile_lite.xcframework.zip    iOS xcframework, selected app chains
 #   checksums.txt                        sha256 of all four
-# A consumer that only needs EVM + SOL (e.g. rwa-mobile) should pin the
-# *_evm_sol.* assets.
+# App consumers should pin the *_lite.* assets.
 
 on:
   workflow_dispatch:
@@ -26,6 +25,8 @@ permissions:
 jobs:
   build:
     runs-on: macos-latest   # macOS builds both the AAR and the xcframework
+    env:
+      LITE_CHAINS: evm sol trx
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,47 +63,64 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: gomobile init
 
-      - name: Build evm+sol bindings
+      - name: Build lite bindings
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: |
-          bash mobile/buildmobile.sh all "evm sol"
-          mv dist/wallet_mobile.aar dist/wallet_mobile_evm_sol.aar
-          mv dist/WalletMobile.xcframework dist/WalletMobile_evm_sol.xcframework
+          bash mobile/buildmobile.sh all "$LITE_CHAINS"
+          mv dist/wallet_mobile.aar dist/wallet_mobile_lite.aar
+          mv dist/WalletMobile.xcframework dist/WalletMobile_lite.xcframework
 
-      - name: Build full (all chains) bindings
+      - name: Build full bindings
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
-        run: bash mobile/buildmobile.sh all ""
+        run: |
+          bash mobile/buildmobile.sh all ""
+          mv dist/wallet_mobile.aar dist/wallet_mobile_full.aar
+          mv dist/WalletMobile.xcframework dist/WalletMobile_full.xcframework
 
       - name: Package + checksum
         run: |
           cd dist
-          zip -r WalletMobile.xcframework.zip WalletMobile.xcframework
-          zip -r WalletMobile_evm_sol.xcframework.zip WalletMobile_evm_sol.xcframework
+          zip -r WalletMobile_full.xcframework.zip WalletMobile_full.xcframework
+          zip -r WalletMobile_lite.xcframework.zip WalletMobile_lite.xcframework
           shasum -a 256 \
-            wallet_mobile.aar \
-            wallet_mobile_evm_sol.aar \
-            WalletMobile.xcframework.zip \
-            WalletMobile_evm_sol.xcframework.zip > checksums.txt
+            wallet_mobile_full.aar \
+            wallet_mobile_lite.aar \
+            WalletMobile_full.xcframework.zip \
+            WalletMobile_lite.xcframework.zip > checksums.txt
           cat checksums.txt
 
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v1
         with:
           subject-path: |
-            dist/wallet_mobile.aar
-            dist/wallet_mobile_evm_sol.aar
-            dist/WalletMobile.xcframework.zip
-            dist/WalletMobile_evm_sol.xcframework.zip
+            dist/wallet_mobile_full.aar
+            dist/wallet_mobile_lite.aar
+            dist/WalletMobile_full.xcframework.zip
+            dist/WalletMobile_lite.xcframework.zip
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.tag }}
           files: |
-            dist/wallet_mobile.aar
-            dist/wallet_mobile_evm_sol.aar
-            dist/WalletMobile.xcframework.zip
-            dist/WalletMobile_evm_sol.xcframework.zip
+            dist/wallet_mobile_full.aar
+            dist/wallet_mobile_lite.aar
+            dist/WalletMobile_full.xcframework.zip
+            dist/WalletMobile_lite.xcframework.zip
             dist/checksums.txt
+
+      - name: Remove obsolete release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for asset in \
+            wallet_mobile.aar \
+            wallet_mobile_evm_sol.aar \
+            WalletMobile.xcframework.zip \
+            WalletMobile_evm_sol.xcframework.zip; do
+            if gh release view "${{ inputs.tag }}" --json assets --jq '.assets[].name' | grep -Fxq "$asset"; then
+              gh release delete-asset "${{ inputs.tag }}" "$asset" --yes
+            fi
+          done
