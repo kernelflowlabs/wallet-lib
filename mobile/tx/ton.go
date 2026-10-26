@@ -5,7 +5,7 @@ package tx
 import (
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/signing/ton"
+	"github.com/kernelflowlabs/wallet-lib/signing/ton"
 )
 
 type TonTxBuilder struct {

@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/contracts/erc20"
-	chainrpc "github.com/kernelflowlabs/wallet-sdk/rpc"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
-	walletevm "github.com/kernelflowlabs/wallet-sdk/signing/evm"
+	"github.com/kernelflowlabs/wallet-lib/contracts/erc20"
+	chainrpc "github.com/kernelflowlabs/wallet-lib/rpc"
+	"github.com/kernelflowlabs/wallet-lib/signing"
+	walletevm "github.com/kernelflowlabs/wallet-lib/signing/evm"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"

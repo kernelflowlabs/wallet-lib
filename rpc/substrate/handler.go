@@ -8,10 +8,10 @@ import (
 
 	gsrpc "github.com/centrifuge/go-substrate-rpc-client/v4"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
-	chainrpc "github.com/kernelflowlabs/wallet-sdk/rpc"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
-	walletsubstrate "github.com/kernelflowlabs/wallet-sdk/signing/substrate"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
+	chainrpc "github.com/kernelflowlabs/wallet-lib/rpc"
+	"github.com/kernelflowlabs/wallet-lib/signing"
+	walletsubstrate "github.com/kernelflowlabs/wallet-lib/signing/substrate"
 )
 
 var _ chainrpc.BasicChainHandler = (*Handler)(nil)

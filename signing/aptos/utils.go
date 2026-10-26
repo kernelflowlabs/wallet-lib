@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 func PublicKey2Address(publicKey []byte) (string, error) {

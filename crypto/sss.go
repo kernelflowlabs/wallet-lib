@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/crypto/bip"
-	"github.com/kernelflowlabs/wallet-sdk/crypto/internal/shamir"
+	"github.com/kernelflowlabs/wallet-lib/crypto/bip"
+	"github.com/kernelflowlabs/wallet-lib/crypto/internal/shamir"
 )
 
 func SSSSplit(data []byte, n, t int) ([][]byte, error) {

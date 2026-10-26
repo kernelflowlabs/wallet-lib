@@ -3,7 +3,7 @@ package multiversx
 import (
 	"fmt"
 
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 
 	"github.com/btcsuite/btcd/address/v2/bech32"
 )

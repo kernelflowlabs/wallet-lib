@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strconv"
 
-	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
+	dexmodel "github.com/kernelflowlabs/wallet-lib/common/dexmodel"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
 )
 
 type Client struct {

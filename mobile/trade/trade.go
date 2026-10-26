@@ -6,10 +6,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kernelflowlabs/wallet-sdk/dex/bridgers"
-	"github.com/kernelflowlabs/wallet-sdk/dex/jupiter"
-	"github.com/kernelflowlabs/wallet-sdk/dex/univ2"
-	"github.com/kernelflowlabs/wallet-sdk/dex/univ3"
+	"github.com/kernelflowlabs/wallet-lib/dex/bridgers"
+	"github.com/kernelflowlabs/wallet-lib/dex/jupiter"
+	"github.com/kernelflowlabs/wallet-lib/dex/univ2"
+	"github.com/kernelflowlabs/wallet-lib/dex/univ3"
 )
 
 var (

@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 
-`gomobile`-friendly façade over [`wallet-sdk`](https://github.com/kernelflowlabs/wallet-sdk)
+`gomobile`-friendly façade over [`wallet-sdk`](https://github.com/kernelflowlabs/wallet-lib)
 — its offline signing core and online RPC handlers. It reshapes the rich Go APIs
 into the flat, string-based, primitive types that `gomobile bind` can export to
 iOS (`.xcframework`) and Android (`.aar`).

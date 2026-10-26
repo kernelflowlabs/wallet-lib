@@ -3,8 +3,8 @@
 package acc
 
 import (
-	"github.com/kernelflowlabs/wallet-sdk/signing"
-	"github.com/kernelflowlabs/wallet-sdk/signing/cosmos"
+	"github.com/kernelflowlabs/wallet-lib/signing"
+	"github.com/kernelflowlabs/wallet-lib/signing/cosmos"
 )
 
 type CosmosAccount struct {

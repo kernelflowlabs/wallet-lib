@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/kernelflowlabs/wallet-sdk/crypto/key"
+	"github.com/kernelflowlabs/wallet-lib/crypto/key"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 )
 

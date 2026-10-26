@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 
 	"github.com/mr-tron/base58"
 	"golang.org/x/crypto/blake2b"

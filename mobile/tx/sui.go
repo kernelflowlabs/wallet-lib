@@ -3,7 +3,7 @@
 package tx
 
 import (
-	"github.com/kernelflowlabs/wallet-sdk/signing/sui"
+	"github.com/kernelflowlabs/wallet-lib/signing/sui"
 	"strings"
 )
 

@@ -1,6 +1,6 @@
 # KernelFlow Wallet SDK
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/kernelflowlabs/wallet-sdk.svg)](https://pkg.go.dev/github.com/kernelflowlabs/wallet-sdk)
+[![Go Reference](https://pkg.go.dev/badge/github.com/kernelflowlabs/wallet-lib.svg)](https://pkg.go.dev/github.com/kernelflowlabs/wallet-lib)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 
 A multi-chain wallet SDK in Go: an **offline signing core** (account derivation,
@@ -49,7 +49,7 @@ products, open-sourced so it can be audited and reused.
 ## Install
 
 ```shell
-go get github.com/kernelflowlabs/wallet-sdk
+go get github.com/kernelflowlabs/wallet-lib
 ```
 
 Requires Go 1.25+ and a C toolchain (`gcc`/`clang`): some transitive
@@ -59,8 +59,8 @@ dependencies build C code via cgo.
 
 ```go
 import (
-    "github.com/kernelflowlabs/wallet-sdk/signing"
-    "github.com/kernelflowlabs/wallet-sdk/signing/evm"
+    "github.com/kernelflowlabs/wallet-lib/signing"
+    "github.com/kernelflowlabs/wallet-lib/signing/evm"
 )
 
 // Derive an account.

@@ -5,7 +5,7 @@ package tx
 import (
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/signing/filecoin"
+	"github.com/kernelflowlabs/wallet-lib/signing/filecoin"
 )
 
 type FilecoinTxBuilder struct {

@@ -8,7 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/kernelflowlabs/wallet-sdk/crypto/bip"
+	"github.com/kernelflowlabs/wallet-lib/crypto/bip"
 	"io"
 
 	"github.com/ethereum/go-ethereum/crypto"

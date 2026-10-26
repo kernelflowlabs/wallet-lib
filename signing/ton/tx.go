@@ -17,7 +17,7 @@ import (
 	"github.com/tonkeeper/tongo/ton"
 	"github.com/tonkeeper/tongo/wallet"
 
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 var nowFunc = time.Now

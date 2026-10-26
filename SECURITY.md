@@ -9,7 +9,7 @@ private key material. We take security reports seriously.
 
 Report privately via one of:
 
-- GitHub's [private vulnerability reporting](https://github.com/kernelflowlabs/wallet-sdk/security/advisories/new)
+- GitHub's [private vulnerability reporting](https://github.com/kernelflowlabs/wallet-lib/security/advisories/new)
 - Email: security@kernelflow.io
 
 Please include a description, affected versions, and a reproduction if possible.

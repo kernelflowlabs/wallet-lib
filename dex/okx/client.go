@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
+	dexmodel "github.com/kernelflowlabs/wallet-lib/common/dexmodel"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
 	"github.com/shopspring/decimal"
 )
 

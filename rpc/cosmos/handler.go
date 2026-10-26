@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
-	chainrpc "github.com/kernelflowlabs/wallet-sdk/rpc"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
-	walletcosmos "github.com/kernelflowlabs/wallet-sdk/signing/cosmos"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
+	chainrpc "github.com/kernelflowlabs/wallet-lib/rpc"
+	"github.com/kernelflowlabs/wallet-lib/signing"
+	walletcosmos "github.com/kernelflowlabs/wallet-lib/signing/cosmos"
 )
 
 var _ chainrpc.BasicChainHandler = (*Handler)(nil)

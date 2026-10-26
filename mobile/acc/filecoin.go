@@ -3,8 +3,8 @@
 package acc
 
 import (
-	"github.com/kernelflowlabs/wallet-sdk/signing"
-	"github.com/kernelflowlabs/wallet-sdk/signing/filecoin"
+	"github.com/kernelflowlabs/wallet-lib/signing"
+	"github.com/kernelflowlabs/wallet-lib/signing/filecoin"
 )
 
 type FilecoinAccount struct {

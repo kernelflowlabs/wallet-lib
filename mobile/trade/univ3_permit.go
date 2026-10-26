@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
-	"github.com/kernelflowlabs/wallet-sdk/dex"
-	"github.com/kernelflowlabs/wallet-sdk/dex/univ3"
+	"github.com/kernelflowlabs/wallet-lib/common/dexmodel"
+	"github.com/kernelflowlabs/wallet-lib/dex"
+	"github.com/kernelflowlabs/wallet-lib/dex/univ3"
 )
 
 type univ3PermitTypedDataReq struct {

@@ -7,10 +7,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/mobile/acc"
-	"github.com/kernelflowlabs/wallet-sdk/mobile/tx"
-	tonrpc "github.com/kernelflowlabs/wallet-sdk/rpc/ton"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/mobile/acc"
+	"github.com/kernelflowlabs/wallet-lib/mobile/tx"
+	tonrpc "github.com/kernelflowlabs/wallet-lib/rpc/ton"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 const path = ""

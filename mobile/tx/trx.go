@@ -3,7 +3,7 @@
 package tx
 
 import (
-	"github.com/kernelflowlabs/wallet-sdk/signing/tron"
+	"github.com/kernelflowlabs/wallet-lib/signing/tron"
 	"strings"
 )
 

@@ -7,10 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/mobile/acc"
-	"github.com/kernelflowlabs/wallet-sdk/mobile/tx"
-	solrpc "github.com/kernelflowlabs/wallet-sdk/rpc/solana"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/mobile/acc"
+	"github.com/kernelflowlabs/wallet-lib/mobile/tx"
+	solrpc "github.com/kernelflowlabs/wallet-lib/rpc/solana"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 const path = "m/44'/501'/0'/0'"

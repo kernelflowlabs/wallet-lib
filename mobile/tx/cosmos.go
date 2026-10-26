@@ -5,7 +5,7 @@ package tx
 import (
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/signing/cosmos"
+	"github.com/kernelflowlabs/wallet-lib/signing/cosmos"
 )
 
 type CosmosTxBuilder struct {

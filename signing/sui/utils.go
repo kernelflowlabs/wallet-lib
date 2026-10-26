@@ -2,7 +2,7 @@ package sui
 
 import (
 	"encoding/hex"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 
 	"golang.org/x/crypto/blake2b"
 )

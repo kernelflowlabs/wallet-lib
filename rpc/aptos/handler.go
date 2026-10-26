@@ -12,10 +12,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
-	chainrpc "github.com/kernelflowlabs/wallet-sdk/rpc"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
-	walletaptos "github.com/kernelflowlabs/wallet-sdk/signing/aptos"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
+	chainrpc "github.com/kernelflowlabs/wallet-lib/rpc"
+	"github.com/kernelflowlabs/wallet-lib/signing"
+	walletaptos "github.com/kernelflowlabs/wallet-lib/signing/aptos"
 )
 
 var _ chainrpc.BasicChainHandler = (*Handler)(nil)

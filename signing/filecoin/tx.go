@@ -13,8 +13,8 @@ import (
 	mbase "github.com/multiformats/go-multibase"
 	mh "github.com/multiformats/go-multihash"
 
-	"github.com/kernelflowlabs/wallet-sdk/crypto/key"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/crypto/key"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 func NewTxBuilder(ti *Ingredient) *TxBuilder {

@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
+	"github.com/kernelflowlabs/wallet-lib/common/dexmodel"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
 )
 
 const DefaultTimeout = 5 * time.Second

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/kernelflowlabs/wallet-sdk/crypto/key"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/crypto/key"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 	"strconv"
 	"strings"
 

@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/mobile/acc"
-	"github.com/kernelflowlabs/wallet-sdk/mobile/tx"
-	aptosrpc "github.com/kernelflowlabs/wallet-sdk/rpc/aptos"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/mobile/acc"
+	"github.com/kernelflowlabs/wallet-lib/mobile/tx"
+	aptosrpc "github.com/kernelflowlabs/wallet-lib/rpc/aptos"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 const path = "m/44'/637'/0'/0'/0'"

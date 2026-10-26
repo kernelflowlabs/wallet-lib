@@ -16,9 +16,9 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
-	"github.com/kernelflowlabs/wallet-sdk/signing/tron"
+	"github.com/kernelflowlabs/wallet-lib/common/dexmodel"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
+	"github.com/kernelflowlabs/wallet-lib/signing/tron"
 	"github.com/shopspring/decimal"
 	"strconv"
 )

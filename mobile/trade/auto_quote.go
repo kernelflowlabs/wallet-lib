@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
-	"github.com/kernelflowlabs/wallet-sdk/dex"
-	"github.com/kernelflowlabs/wallet-sdk/dex/bridgers"
-	"github.com/kernelflowlabs/wallet-sdk/dex/bungee"
-	"github.com/kernelflowlabs/wallet-sdk/dex/lifi"
+	"github.com/kernelflowlabs/wallet-lib/common/dexmodel"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
+	"github.com/kernelflowlabs/wallet-lib/dex"
+	"github.com/kernelflowlabs/wallet-lib/dex/bridgers"
+	"github.com/kernelflowlabs/wallet-lib/dex/bungee"
+	"github.com/kernelflowlabs/wallet-lib/dex/lifi"
 )
 
 var (

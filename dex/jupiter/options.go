@@ -1,6 +1,6 @@
 package jupiter
 
-import "github.com/kernelflowlabs/wallet-sdk/dex"
+import "github.com/kernelflowlabs/wallet-lib/dex"
 
 var (
 	RateLimitFree = dex.RateLimit{QPS: 4, Burst: 8}

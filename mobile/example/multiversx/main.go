@@ -7,11 +7,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/mobile/acc"
-	"github.com/kernelflowlabs/wallet-sdk/mobile/tx"
-	mvxrpc "github.com/kernelflowlabs/wallet-sdk/rpc/multiversx"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
-	"github.com/kernelflowlabs/wallet-sdk/signing/multiversx"
+	"github.com/kernelflowlabs/wallet-lib/mobile/acc"
+	"github.com/kernelflowlabs/wallet-lib/mobile/tx"
+	mvxrpc "github.com/kernelflowlabs/wallet-lib/rpc/multiversx"
+	"github.com/kernelflowlabs/wallet-lib/signing"
+	"github.com/kernelflowlabs/wallet-lib/signing/multiversx"
 )
 
 const path = "m/44'/508'/0'/0'/0'"

@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
 )
 
 const (

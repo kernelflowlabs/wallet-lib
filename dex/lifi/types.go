@@ -5,9 +5,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	utils "github.com/kernelflowlabs/wallet-sdk/common/bigdec"
-	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
-	"github.com/kernelflowlabs/wallet-sdk/signing/tron"
+	utils "github.com/kernelflowlabs/wallet-lib/common/bigdec"
+	dexmodel "github.com/kernelflowlabs/wallet-lib/common/dexmodel"
+	"github.com/kernelflowlabs/wallet-lib/signing/tron"
 	"strconv"
 	"strings"
 

@@ -6,10 +6,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/mobile/acc"
-	"github.com/kernelflowlabs/wallet-sdk/mobile/tx"
-	evmrpc "github.com/kernelflowlabs/wallet-sdk/rpc/evm"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/mobile/acc"
+	"github.com/kernelflowlabs/wallet-lib/mobile/tx"
+	evmrpc "github.com/kernelflowlabs/wallet-lib/rpc/evm"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 const path = "m/44'/60'/0'/0/0"

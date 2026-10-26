@@ -2,7 +2,7 @@ package crypto
 
 import (
 	"fmt"
-	"github.com/kernelflowlabs/wallet-sdk/crypto/bip"
+	"github.com/kernelflowlabs/wallet-lib/crypto/bip"
 )
 
 const (

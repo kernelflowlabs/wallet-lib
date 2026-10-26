@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
+	"github.com/kernelflowlabs/wallet-lib/common/dexmodel"
 )
 
 type buildTxReq struct {

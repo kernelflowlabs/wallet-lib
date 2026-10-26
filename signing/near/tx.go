@@ -12,7 +12,7 @@ import (
 	"github.com/btcsuite/btcd/address/v2/base58"
 	borsh "github.com/near/borsh-go"
 
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 func NewTxBuilder(ti *Ingredient) *TxBuilder {

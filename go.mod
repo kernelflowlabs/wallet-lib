@@ -1,4 +1,4 @@
-module github.com/kernelflowlabs/wallet-sdk
+module github.com/kernelflowlabs/wallet-lib
 
 go 1.27.2
 

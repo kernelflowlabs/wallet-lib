@@ -1,7 +1,7 @@
 package tx
 
 import (
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 const (

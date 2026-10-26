@@ -1,7 +1,7 @@
 package oneinch
 
 import (
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
 	"context"
 	"fmt"
 	"strconv"

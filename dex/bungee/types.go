@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
-	"github.com/kernelflowlabs/wallet-sdk/signing/tron"
+	dexmodel "github.com/kernelflowlabs/wallet-lib/common/dexmodel"
+	"github.com/kernelflowlabs/wallet-lib/signing/tron"
 	"github.com/shopspring/decimal"
 )
 

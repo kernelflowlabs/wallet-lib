@@ -1,8 +1,8 @@
 package jupiter
 
 import (
-	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
+	dexmodel "github.com/kernelflowlabs/wallet-lib/common/dexmodel"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
 	"context"
 	"fmt"
 	"net/url"

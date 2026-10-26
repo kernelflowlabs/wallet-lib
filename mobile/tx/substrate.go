@@ -4,7 +4,7 @@ package tx
 
 import (
 	"encoding/json"
-	"github.com/kernelflowlabs/wallet-sdk/signing/substrate"
+	"github.com/kernelflowlabs/wallet-lib/signing/substrate"
 	"strings"
 )
 

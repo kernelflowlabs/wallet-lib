@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/crypto/key"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/crypto/key"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 
 	"golang.org/x/crypto/blake2b"
 )

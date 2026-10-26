@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/crypto"
+	"github.com/kernelflowlabs/wallet-lib/crypto"
 )
 
 const (

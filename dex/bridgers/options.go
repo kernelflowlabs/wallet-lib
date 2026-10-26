@@ -4,8 +4,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
-	"github.com/kernelflowlabs/wallet-sdk/dex"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
+	"github.com/kernelflowlabs/wallet-lib/dex"
 )
 
 const DefaultBaseURL = "https://api.bridgers.xyz"

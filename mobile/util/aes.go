@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"errors"
 
-	"github.com/kernelflowlabs/wallet-sdk/crypto"
+	"github.com/kernelflowlabs/wallet-lib/crypto"
 )
 
 const maxCipherInput = 1 << 20

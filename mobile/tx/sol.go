@@ -3,7 +3,7 @@
 package tx
 
 import (
-	"github.com/kernelflowlabs/wallet-sdk/signing/solana"
+	"github.com/kernelflowlabs/wallet-lib/signing/solana"
 	"strings"
 )
 

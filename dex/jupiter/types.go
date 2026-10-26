@@ -1,7 +1,7 @@
 package jupiter
 
 import (
-	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
+	dexmodel "github.com/kernelflowlabs/wallet-lib/common/dexmodel"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"

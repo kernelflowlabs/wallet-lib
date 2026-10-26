@@ -5,8 +5,8 @@ package acc
 import (
 	"encoding/hex"
 
-	"github.com/kernelflowlabs/wallet-sdk/signing"
-	"github.com/kernelflowlabs/wallet-sdk/signing/evm"
+	"github.com/kernelflowlabs/wallet-lib/signing"
+	"github.com/kernelflowlabs/wallet-lib/signing/evm"
 )
 
 type EvmAccount struct {

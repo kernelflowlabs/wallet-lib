@@ -4,14 +4,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	dexmodel "github.com/kernelflowlabs/wallet-sdk/common/dexmodel"
+	dexmodel "github.com/kernelflowlabs/wallet-lib/common/dexmodel"
 	"log"
 	"math/big"
 	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/kernelflowlabs/wallet-sdk/signing/tron"
+	"github.com/kernelflowlabs/wallet-lib/signing/tron"
 )
 
 type (

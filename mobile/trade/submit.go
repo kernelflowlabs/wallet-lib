@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/dex/bridgers"
+	"github.com/kernelflowlabs/wallet-lib/dex/bridgers"
 )
 
 type submitReq struct {

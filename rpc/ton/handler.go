@@ -13,10 +13,10 @@ import (
 	"github.com/tonkeeper/tongo/liteapi"
 	"github.com/tonkeeper/tongo/tlb"
 
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
-	chainrpc "github.com/kernelflowlabs/wallet-sdk/rpc"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
-	walletton "github.com/kernelflowlabs/wallet-sdk/signing/ton"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
+	chainrpc "github.com/kernelflowlabs/wallet-lib/rpc"
+	"github.com/kernelflowlabs/wallet-lib/signing"
+	walletton "github.com/kernelflowlabs/wallet-lib/signing/ton"
 )
 
 var _ chainrpc.BasicChainHandler = (*Handler)(nil)

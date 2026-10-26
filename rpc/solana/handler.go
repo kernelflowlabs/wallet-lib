@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
-	chainrpc "github.com/kernelflowlabs/wallet-sdk/rpc"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
-	walletsolana "github.com/kernelflowlabs/wallet-sdk/signing/solana"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
+	chainrpc "github.com/kernelflowlabs/wallet-lib/rpc"
+	"github.com/kernelflowlabs/wallet-lib/signing"
+	walletsolana "github.com/kernelflowlabs/wallet-lib/signing/solana"
 
 	"github.com/blocto/solana-go-sdk/common"
 )

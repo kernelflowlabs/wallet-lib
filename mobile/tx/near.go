@@ -5,7 +5,7 @@ package tx
 import (
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/signing/near"
+	"github.com/kernelflowlabs/wallet-lib/signing/near"
 )
 
 type NearTxBuilder struct {

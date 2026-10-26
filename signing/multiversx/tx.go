@@ -1,15 +1,15 @@
 package multiversx
 
 import (
-	"github.com/kernelflowlabs/wallet-sdk/contracts/esdt"
+	"github.com/kernelflowlabs/wallet-lib/contracts/esdt"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
 
-	"github.com/kernelflowlabs/wallet-sdk/crypto/key"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/crypto/key"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 func NewTxBuilder(ti *Ingredient) *TxBuilder {

@@ -1,7 +1,7 @@
 package acc
 
 import (
-	"github.com/kernelflowlabs/wallet-sdk/crypto"
+	"github.com/kernelflowlabs/wallet-lib/crypto"
 )
 
 var addressValidators = map[int]func(address, network string) bool{}

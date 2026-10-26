@@ -1,6 +1,6 @@
 package relay
 
-import "github.com/kernelflowlabs/wallet-sdk/dex"
+import "github.com/kernelflowlabs/wallet-lib/dex"
 
 var RateLimitPublic = dex.RateLimit{QPS: 1, Burst: 2}
 

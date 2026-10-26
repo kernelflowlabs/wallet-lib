@@ -1,6 +1,6 @@
 package dex
 
-import "github.com/kernelflowlabs/wallet-sdk/common/httpc"
+import "github.com/kernelflowlabs/wallet-lib/common/httpc"
 
 type RateLimit struct {
 	QPS   float64

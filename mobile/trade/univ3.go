@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/dex/univ3"
+	"github.com/kernelflowlabs/wallet-lib/dex/univ3"
 )
 
 var univ3Clients map[string]*univ3.Client

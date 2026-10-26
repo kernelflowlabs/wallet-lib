@@ -5,7 +5,7 @@ package tx
 import (
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/signing/stellar"
+	"github.com/kernelflowlabs/wallet-lib/signing/stellar"
 )
 
 type StellarTxBuilder struct {

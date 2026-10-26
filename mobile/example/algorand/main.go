@@ -7,10 +7,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/mobile/acc"
-	"github.com/kernelflowlabs/wallet-sdk/mobile/tx"
-	algorandrpc "github.com/kernelflowlabs/wallet-sdk/rpc/algorand"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/mobile/acc"
+	"github.com/kernelflowlabs/wallet-lib/mobile/tx"
+	algorandrpc "github.com/kernelflowlabs/wallet-lib/rpc/algorand"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 const path = "m/44'/283'/0'/0/0"

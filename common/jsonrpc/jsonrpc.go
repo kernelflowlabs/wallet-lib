@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
 )
 
 type JSONRPCError struct {

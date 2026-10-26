@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/kernelflowlabs/wallet-sdk/mobile/acc"
+	"github.com/kernelflowlabs/wallet-lib/mobile/acc"
 )
 
 const path = "m/44'/60'/0'/0/0"

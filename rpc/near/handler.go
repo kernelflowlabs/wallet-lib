@@ -12,9 +12,9 @@ import (
 
 	"github.com/btcsuite/btcd/address/v2/base58"
 
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
-	chainrpc "github.com/kernelflowlabs/wallet-sdk/rpc"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
+	chainrpc "github.com/kernelflowlabs/wallet-lib/rpc"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 var _ chainrpc.BasicChainHandler = (*Handler)(nil)

@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/kernelflowlabs/wallet-sdk/crypto/key"
+	"github.com/kernelflowlabs/wallet-lib/crypto/key"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"

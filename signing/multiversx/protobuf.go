@@ -1,13 +1,13 @@
 package multiversx
 
 import (
-	"github.com/kernelflowlabs/wallet-sdk/contracts/esdt"
+	"github.com/kernelflowlabs/wallet-lib/contracts/esdt"
 	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strconv"
 
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 	"golang.org/x/crypto/blake2b"
 )
 

@@ -5,7 +5,7 @@ package tx
 import (
 	"strings"
 
-	"github.com/kernelflowlabs/wallet-sdk/signing/algorand"
+	"github.com/kernelflowlabs/wallet-lib/signing/algorand"
 )
 
 type AlgorandTxBuilder struct {

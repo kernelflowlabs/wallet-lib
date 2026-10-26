@@ -1,7 +1,7 @@
 package solana
 
 import (
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 
 	"github.com/blocto/solana-go-sdk/common"
 	"github.com/mr-tron/base58"

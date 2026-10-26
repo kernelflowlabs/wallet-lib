@@ -13,10 +13,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/common/httpc"
-	chainrpc "github.com/kernelflowlabs/wallet-sdk/rpc"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
-	walletutxo "github.com/kernelflowlabs/wallet-sdk/signing/utxo"
+	"github.com/kernelflowlabs/wallet-lib/common/httpc"
+	chainrpc "github.com/kernelflowlabs/wallet-lib/rpc"
+	"github.com/kernelflowlabs/wallet-lib/signing"
+	walletutxo "github.com/kernelflowlabs/wallet-lib/signing/utxo"
 
 	"github.com/shopspring/decimal"
 )

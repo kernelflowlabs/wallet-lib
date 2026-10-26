@@ -8,10 +8,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/kernelflowlabs/wallet-sdk/mobile/acc"
-	"github.com/kernelflowlabs/wallet-sdk/mobile/tx"
-	cosmosrpc "github.com/kernelflowlabs/wallet-sdk/rpc/cosmos"
-	"github.com/kernelflowlabs/wallet-sdk/signing"
+	"github.com/kernelflowlabs/wallet-lib/mobile/acc"
+	"github.com/kernelflowlabs/wallet-lib/mobile/tx"
+	cosmosrpc "github.com/kernelflowlabs/wallet-lib/rpc/cosmos"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 const path = "m/44'/118'/0'/0/0"

@@ -3,7 +3,7 @@ package tron
 import (
 	"math/big"
 
-	wallettron "github.com/kernelflowlabs/wallet-sdk/signing/tron"
+	wallettron "github.com/kernelflowlabs/wallet-lib/signing/tron"
 )
 
 const SignatureTransferMethod = "a9059cbb"
