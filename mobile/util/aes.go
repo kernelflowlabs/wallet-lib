@@ -30,17 +30,3 @@ func AesGcmOpen(data, key, aad []byte) ([]byte, error) {
 	}
 	return crypto.AesDecryptGCM(data[12:], key, data[:12], aad)
 }
-
-func AesCbcEncrypt(data, key, iv []byte) ([]byte, error) {
-	if len(data) > maxCipherInput {
-		return nil, errors.New("encryption input exceeds size limit")
-	}
-	return crypto.AesEncryptCBC(data, key, iv)
-}
-
-func AesCbcDecrypt(data, key, iv []byte) ([]byte, error) {
-	if len(data) > maxCipherInput {
-		return nil, errors.New("decryption input exceeds size limit")
-	}
-	return crypto.AesDecryptCBC(data, key, iv)
-}

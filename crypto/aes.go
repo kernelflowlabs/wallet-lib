@@ -17,7 +17,7 @@ func AesEncryptCTR(data, key, iv []byte) ([]byte, error) {
 	stream := cipher.NewCTR(aesBlock, iv)
 	outText := make([]byte, len(data))
 	stream.XORKeyStream(outText, data)
-	return outText, err
+	return outText, nil
 }
 
 func AesDecryptCTR(data, key, iv []byte) ([]byte, error) {
@@ -57,35 +57,4 @@ func newGCM(key, nonce []byte) (cipher.AEAD, error) {
 		return nil, fmt.Errorf("invalid GCM nonce length")
 	}
 	return gcm, nil
-}
-
-func AesEncryptCBC(data, key, iv []byte) ([]byte, error) {
-	block, err := cbcBlock(data, key, iv)
-	if err != nil {
-		return nil, err
-	}
-	out := make([]byte, len(data))
-	cipher.NewCBCEncrypter(block, iv).CryptBlocks(out, data)
-	return out, nil
-}
-
-func AesDecryptCBC(data, key, iv []byte) ([]byte, error) {
-	block, err := cbcBlock(data, key, iv)
-	if err != nil {
-		return nil, err
-	}
-	out := make([]byte, len(data))
-	cipher.NewCBCDecrypter(block, iv).CryptBlocks(out, data)
-	return out, nil
-}
-
-func cbcBlock(data, key, iv []byte) (cipher.Block, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, fmt.Errorf("invalid AES key")
-	}
-	if len(iv) != aes.BlockSize || len(data)%aes.BlockSize != 0 {
-		return nil, fmt.Errorf("invalid CBC block or IV length")
-	}
-	return block, nil
 }

@@ -46,9 +46,4 @@ func TestAESMobileBounds(t *testing.T) {
 	if _, err := AesGcmSeal(nil, []byte("bad"), nil); err == nil {
 		t.Fatal("invalid key")
 	}
-	for _, f := range []func([]byte, []byte, []byte) ([]byte, error){AesCbcEncrypt, AesCbcDecrypt} {
-		if _, err := f(make([]byte, maxCipherInput+16), key, make([]byte, 16)); err == nil {
-			t.Fatal("oversized CBC input")
-		}
-	}
 }
