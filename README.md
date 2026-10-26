@@ -1,4 +1,4 @@
-# KernelFlow Wallet SDK
+# KernelFlow Wallet Library
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/kernelflowlabs/wallet-lib.svg)](https://pkg.go.dev/github.com/kernelflowlabs/wallet-lib)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)

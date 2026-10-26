@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	defaultUserAgent      = "wallet-sdk/1.0 (+https://github.com/kernelflowlabs/wallet-lib)"
+	defaultUserAgent      = "wallet-lib/1.0 (+https://github.com/kernelflowlabs/wallet-lib)"
 	defaultTimeout        = 60 * time.Second
 	defaultRateLimitQPS   = 200
 	defaultRateLimitBurst = 500

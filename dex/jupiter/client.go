@@ -66,7 +66,7 @@ func NewClientWithOptions(rpcURL, feeAccount, token string, opts ...ClientOption
 	}
 	dataHeaders := map[string]string{
 		"Content-Type": "application/json",
-		"User-Agent":   "Mozilla/5.0 (compatible; wallet-sdk/1.0)",
+		"User-Agent":   "Mozilla/5.0 (compatible; wallet-lib/1.0)",
 	}
 	for k, v := range headers {
 		dataHeaders[k] = v

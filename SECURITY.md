@@ -1,6 +1,6 @@
 # Security Policy
 
-The KernelFlow Wallet SDK produces and signs blockchain transactions and handles
+The KernelFlow Wallet Library produces and signs blockchain transactions and handles
 private key material. We take security reports seriously.
 
 ## Reporting a vulnerability
