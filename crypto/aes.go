@@ -24,6 +24,37 @@ func AesDecryptCTR(data, key, iv []byte) ([]byte, error) {
 	return AesEncryptCTR(data, key, iv)
 }
 
+func AesEncryptCBC(data, key, iv []byte) ([]byte, error) {
+	block, err := cbcBlock(data, key, iv)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]byte, len(data))
+	cipher.NewCBCEncrypter(block, iv).CryptBlocks(out, data)
+	return out, nil
+}
+
+func AesDecryptCBC(data, key, iv []byte) ([]byte, error) {
+	block, err := cbcBlock(data, key, iv)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]byte, len(data))
+	cipher.NewCBCDecrypter(block, iv).CryptBlocks(out, data)
+	return out, nil
+}
+
+func cbcBlock(data, key, iv []byte) (cipher.Block, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, fmt.Errorf("invalid AES key")
+	}
+	if len(iv) != aes.BlockSize || len(data)%aes.BlockSize != 0 {
+		return nil, fmt.Errorf("invalid CBC block or IV length")
+	}
+	return block, nil
+}
+
 func AesEncryptGCM(data, key, nonce, aad []byte) ([]byte, error) {
 	gcm, err := newGCM(key, nonce)
 	if err != nil {

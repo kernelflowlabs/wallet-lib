@@ -9,6 +9,20 @@ import (
 
 const maxCipherInput = 1 << 20
 
+func AesCbcEncrypt(data, key, iv []byte) ([]byte, error) {
+	if len(data) > maxCipherInput {
+		return nil, errors.New("encryption input exceeds size limit")
+	}
+	return crypto.AesEncryptCBC(data, key, iv)
+}
+
+func AesCbcDecrypt(data, key, iv []byte) ([]byte, error) {
+	if len(data) > maxCipherInput {
+		return nil, errors.New("decryption input exceeds size limit")
+	}
+	return crypto.AesDecryptCBC(data, key, iv)
+}
+
 func AesGcmSeal(data, key, aad []byte) ([]byte, error) {
 	if len(data) > maxCipherInput || len(aad) > 65536 {
 		return nil, errors.New("encryption input exceeds size limit")
