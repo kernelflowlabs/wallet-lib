@@ -3,10 +3,10 @@ package evm
 import (
 	"fmt"
 
-	"github.com/kernelflowlabs/wallet-lib/signing"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
 func PublicKey2Address(publicKey []byte) (string, error) {
@@ -26,8 +26,11 @@ func ValidAddress(address string) bool {
 	return common.IsHexAddress(address)
 }
 
-func NormalizeAddress(address string) string {
-	return common.HexToAddress(address).Hex()
+func NormalizeAddress(address string) (string, bool) {
+	if !common.IsHexAddress(address) {
+		return "", false
+	}
+	return common.HexToAddress(address).Hex(), true
 }
 
 func IsZeroAddress(address string) bool {

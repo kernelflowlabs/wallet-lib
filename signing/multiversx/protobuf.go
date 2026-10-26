@@ -1,9 +1,9 @@
 package multiversx
 
 import (
-	"github.com/kernelflowlabs/wallet-lib/contracts/esdt"
 	"encoding/hex"
 	"fmt"
+	"github.com/kernelflowlabs/wallet-lib/contracts/esdt"
 	"math/big"
 	"strconv"
 

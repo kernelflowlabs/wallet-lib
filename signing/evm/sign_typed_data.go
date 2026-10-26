@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/kernelflowlabs/wallet-lib/crypto/key"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+	"github.com/kernelflowlabs/wallet-lib/crypto/key"
 )
 
 func SignTypedDataJSON(privateKey []byte, typedDataJSON []byte) ([]byte, error) {

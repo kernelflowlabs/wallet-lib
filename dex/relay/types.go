@@ -4,10 +4,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
+	"math/big"
 	"strconv"
 	"strings"
 
-	utils "github.com/kernelflowlabs/wallet-lib/common/bigdec"
 	dexmodel "github.com/kernelflowlabs/wallet-lib/common/dexmodel"
 	"github.com/kernelflowlabs/wallet-lib/signing/tron"
 
@@ -81,7 +82,7 @@ type (
 			SlippageTolerance struct {
 				Total string `json:"total"`
 			} `json:"slippageTolerance"`
-			TimeEstimate int64 `json:"timeEstimate"`
+			TimeEstimate json.Number `json:"timeEstimate"`
 		} `json:"details"`
 	}
 	EvmStepData struct {
@@ -119,12 +120,15 @@ const (
 	tradeTypeIn    = "EXACT_INPUT"
 	stepApprove    = "approve"
 	stepDeposit    = "deposit"
+	stepSwap       = "swap"
 	tronStepType   = "TriggerSmartContract"
 	tronChain      = "TRX"
 	tronUserOp     = "tron_tx"
 	feeBucketGas   = "gas"
 	feeBucketRelay = "relayer"
 	feeBucketApp   = "app"
+
+	erc20ApproveSelector = "095ea7b3"
 )
 
 func (c *Client) toRelayQuoteReq(in *dexmodel.DexQuoteIn) (*QuoteReq, error) {
@@ -158,21 +162,38 @@ func (c *Client) toRelayQuoteReq(in *dexmodel.DexQuoteIn) (*QuoteReq, error) {
 		Referrer:            c.referrer,
 		RefundTo:            in.RefundAddress,
 	}
-	if fee := appFee(in.FeeRate, in.FeeReceiver); fee != nil {
+	fee, err := appFee(in.FeeRate, in.FeeReceiver)
+	if err != nil {
+		return nil, err
+	}
+	if fee != nil {
 		req.AppFees = []AppFee{*fee}
 	}
 	return req, nil
 }
 
-func appFee(feeRate, receiver string) *AppFee {
-	if receiver == "" || feeRate == "" {
-		return nil
+func appFee(feeRate, receiver string) (*AppFee, error) {
+	if feeRate == "" || feeRate == "0" {
+		return nil, nil
 	}
 	rate, err := decimal.NewFromString(feeRate)
-	if err != nil || !rate.IsPositive() {
-		return nil
+	if err != nil {
+		return nil, fmt.Errorf("invalid feeRate %q", feeRate)
 	}
-	return &AppFee{Recipient: receiver, Fee: rate.Shift(2).Truncate(0).String()}
+	if rate.IsZero() {
+		return nil, nil
+	}
+	if rate.IsNegative() {
+		return nil, fmt.Errorf("negative feeRate %q", feeRate)
+	}
+	if receiver == "" {
+		return nil, fmt.Errorf("feeRate %q given without a feeReceiver", feeRate)
+	}
+	bps := rate.Shift(2)
+	if !bps.Equal(bps.Truncate(0)) {
+		return nil, fmt.Errorf("feeRate %q is finer than one basis point", feeRate)
+	}
+	return &AppFee{Recipient: receiver, Fee: bps.Truncate(0).String()}, nil
 }
 
 func (c *Client) toStandardQuoteRes(res *QuoteRes) *dexmodel.DexQuoteOut {
@@ -180,18 +201,18 @@ func (c *Client) toStandardQuoteRes(res *QuoteRes) *dexmodel.DexQuoteOut {
 	if !ok {
 		return nil
 	}
-	approveStep, depositStep := res.step(stepApprove), res.step(stepDeposit)
-	if depositStep == nil {
+	approveStep, execStep, ok := res.transactionSteps()
+	if !ok {
 		return nil
 	}
 
 	var txData *dexmodel.DexTx
 	var userOp string
 	if chain == tronChain {
-		txData = tronTxData(depositStep)
+		txData = tronTxData(execStep)
 		userOp = tronUserOp
 	} else {
-		txData = evmTxData(depositStep)
+		txData = evmTxData(execStep)
 	}
 	if txData == nil {
 		return nil
@@ -199,12 +220,18 @@ func (c *Client) toStandardQuoteRes(res *QuoteRes) *dexmodel.DexQuoteOut {
 
 	var approvalData *dexmodel.DexApproval
 	if approveStep != nil {
-		if approve := evmTxData(approveStep); approve != nil && approve.To != "" {
-			approvalData = &dexmodel.DexApproval{
-				Token:   approve.To,
-				Spender: txData.To,
-				Amount:  res.Details.CurrencyIn.Amount,
-			}
+		approve := evmTxData(approveStep)
+		if approve == nil || approve.To == "" {
+			return nil
+		}
+		spender, amount, ok := decodeApproval(approve.Data)
+		if !ok {
+			return nil
+		}
+		approvalData = &dexmodel.DexApproval{
+			Token:   approve.To,
+			Spender: spender,
+			Amount:  amount,
 		}
 	}
 
@@ -225,7 +252,7 @@ func (c *Client) toStandardQuoteRes(res *QuoteRes) *dexmodel.DexQuoteOut {
 		Slippage:          slippage.Shift(-2).InexactFloat64(),
 		SuggestedSlippage: slippage.Shift(-2).InexactFloat64(),
 		FeeInUsd:          fmt.Sprintf("%.2f", res.feeUsd()),
-		EstimatedTime:     res.Details.TimeEstimate,
+		EstimatedTime:     estimatedSeconds(res.Details.TimeEstimate),
 		NeedBuild:         false,
 		UserOp:            userOp,
 		TxData:            txData,
@@ -240,14 +267,70 @@ func (c *Client) toStandardQuoteRes(res *QuoteRes) *dexmodel.DexQuoteOut {
 	}
 }
 
-func (res *QuoteRes) step(id string) json.RawMessage {
-	for _, s := range res.Steps {
-		if s.ID != id || len(s.Items) == 0 {
-			continue
-		}
-		return s.Items[0].Data
+func decodeApproval(calldata string) (string, string, bool) {
+	payload, err := hex.DecodeString(strings.TrimPrefix(calldata, "0x"))
+	if err != nil || len(payload) != 4+32+32 {
+		return "", "", false
 	}
-	return nil
+	if hex.EncodeToString(payload[:4]) != erc20ApproveSelector {
+		return "", "", false
+	}
+	spender := payload[4:36]
+	for _, b := range spender[:12] {
+		if b != 0 {
+			return "", "", false
+		}
+	}
+	amount := new(big.Int).SetBytes(payload[36:])
+	if amount.Sign() <= 0 {
+		return "", "", false
+	}
+	return "0x" + hex.EncodeToString(spender[12:]), amount.String(), true
+}
+
+func decimalAmount(raw string) (string, bool) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", true
+	}
+	base := 10
+	if trimmed := strings.TrimPrefix(strings.TrimPrefix(raw, "0x"), "0X"); trimmed != raw {
+		raw, base = trimmed, 16
+	}
+	amount, ok := new(big.Int).SetString(raw, base)
+	if !ok || amount.Sign() < 0 {
+		return "", false
+	}
+	if amount.Sign() == 0 {
+		return "", true
+	}
+	return amount.String(), true
+}
+
+func (res *QuoteRes) transactionSteps() (approve, exec json.RawMessage, ok bool) {
+	for _, s := range res.Steps {
+		if len(s.Items) != 1 {
+			return nil, nil, false
+		}
+		switch s.ID {
+		case stepApprove:
+			if approve != nil {
+				return nil, nil, false
+			}
+			approve = s.Items[0].Data
+		case stepDeposit, stepSwap:
+			if exec != nil {
+				return nil, nil, false
+			}
+			exec = s.Items[0].Data
+		default:
+			return nil, nil, false
+		}
+	}
+	if exec == nil {
+		return nil, nil, false
+	}
+	return approve, exec, true
 }
 
 func (res *QuoteRes) feeUsd() float64 {
@@ -266,6 +349,17 @@ func (res *QuoteRes) feeUsd() float64 {
 	return total
 }
 
+func estimatedSeconds(raw json.Number) int64 {
+	if raw == "" {
+		return 0
+	}
+	seconds, err := raw.Float64()
+	if err != nil || seconds <= 0 {
+		return 0
+	}
+	return int64(math.Ceil(seconds))
+}
+
 func priceImpactPct(percent string) float64 {
 	impact, err := decimal.NewFromString(percent)
 	if err != nil || !impact.IsNegative() {
@@ -282,17 +376,17 @@ func evmTxData(raw json.RawMessage) *dexmodel.DexTx {
 	if data.To == "" || !strings.HasPrefix(data.Data, "0x") {
 		return nil
 	}
-	value := utils.HexToDecimal(data.Value)
-	if value == "0" {
-		value = ""
+	value, ok := decimalAmount(data.Value)
+	if !ok {
+		return nil
 	}
-	gasPrice := utils.HexToDecimal(data.GasPrice)
-	if gasPrice == "0" {
-		gasPrice = ""
+	gasPrice, ok := decimalAmount(data.GasPrice)
+	if !ok {
+		return nil
 	}
-	gasLimit := utils.HexToDecimal(data.Gas)
-	if gasLimit == "0" {
-		gasLimit = ""
+	gasLimit, ok := decimalAmount(data.Gas)
+	if !ok {
+		return nil
 	}
 	return &dexmodel.DexTx{
 		To:       data.To,

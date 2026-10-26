@@ -1,11 +1,11 @@
 package jupiter
 
 import (
-	dexmodel "github.com/kernelflowlabs/wallet-lib/common/dexmodel"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	dexmodel "github.com/kernelflowlabs/wallet-lib/common/dexmodel"
 	"strings"
 
 	"github.com/shopspring/decimal"
@@ -75,9 +75,9 @@ type SwapInstructionsReq struct {
 }
 
 type InstructionDTO struct {
-	ProgramID string             `json:"programId"`
-	Accounts  []InstructionAcct  `json:"accounts"`
-	Data      string             `json:"data"` // base64
+	ProgramID string            `json:"programId"`
+	Accounts  []InstructionAcct `json:"accounts"`
+	Data      string            `json:"data"` // base64
 }
 
 type InstructionAcct struct {
