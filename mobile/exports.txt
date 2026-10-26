@@ -1,0 +1,112 @@
+mobile/acc	    func NewAlgorandFromMnemonic(mnemonic, path string) (*AlgorandAccount, error)
+mobile/acc	    func NewAptFromMnemonic(mnemonic, path string) (*AptAccount, error)
+mobile/acc	    func NewCosmosFromMnemonic(mnemonic, path, network string) (*CosmosAccount, error)
+mobile/acc	    func NewEgldFromMnemonic(mnemonic, path string) (*EgldAccount, error)
+mobile/acc	    func NewEvmFromMnemonic(mnemonic, path string) (*EvmAccount, error)
+mobile/acc	    func NewFilecoinFromMnemonic(mnemonic, path string) (*FilecoinAccount, error)
+mobile/acc	    func NewKasFromMnemonic(mnemonic, path string) (*KasAccount, error)
+mobile/acc	    func NewNearFromMnemonic(mnemonic, path string) (*NearAccount, error)
+mobile/acc	    func NewSolFromMnemonic(mnemonic, path string) (*SolAccount, error)
+mobile/acc	    func NewStellarFromMnemonic(mnemonic, path string) (*StellarAccount, error)
+mobile/acc	    func NewSubstrateFromMnemonic(mnemonic, path, network string) (*SubstrateAccount, error)
+mobile/acc	    func NewSubstrateFromMnemonicStandard(mnemonic, path, network string) (*SubstrateAccount, error)
+mobile/acc	    func NewSuiFromMnemonic(mnemonic, path string) (*SuiAccount, error)
+mobile/acc	    func NewTonFromMnemonic(mnemonic, path string) (*TonAccount, error)
+mobile/acc	    func NewTrxFromMnemonic(mnemonic, path string) (*TrxAccount, error)
+mobile/acc	    func NewUtxoFromMnemonic(mnemonic, path, network string) (*UtxoAccount, error)
+mobile/acc	    func NewUtxoFromPrivateKeyHex(privateKey, network string) (*UtxoAccount, error)
+mobile/acc	const SubstrateNetworkEnumForDOT string = substrate.NetworkEnumForDOT ...
+mobile/acc	const UtxoNetworkEnumForBTC string = utxo.NetworkEnumForBTC ...
+mobile/acc	func GenerateMnemonic() (string, error)
+mobile/acc	func PrivateKeyHexToWIF(privateKey string) (string, error)
+mobile/acc	func PrivateKeyWIFToHex(privateKey string) (string, error)
+mobile/acc	func ReadFromKeyStore(ksString, password string, isMn bool) (string, error)
+mobile/acc	func ValidAddress(address string, family int, network string) bool
+mobile/acc	func WriteToKeyStore(name, text, password string, isMn bool) (string, error)
+mobile/acc	type AlgorandAccount struct{ ... }
+mobile/acc	type AptAccount struct{ ... }
+mobile/acc	type CosmosAccount struct{ ... }
+mobile/acc	type EgldAccount struct{ ... }
+mobile/acc	type EvmAccount struct{ ... }
+mobile/acc	type FilecoinAccount struct{ ... }
+mobile/acc	type KasAccount struct{ ... }
+mobile/acc	type NearAccount struct{ ... }
+mobile/acc	type SolAccount struct{ ... }
+mobile/acc	type StellarAccount struct{ ... }
+mobile/acc	type SubstrateAccount struct{ ... }
+mobile/acc	type SuiAccount struct{ ... }
+mobile/acc	type TonAccount struct{ ... }
+mobile/acc	type TrxAccount struct{ ... }
+mobile/acc	type UtxoAccount struct{ ... }
+mobile/test	    const DexStatusPending DexStatus = "Pending" ...
+mobile/test	type DexApproval struct{ ... }
+mobile/test	type DexCheckTxOut struct{ ... }
+mobile/test	type DexExecuteIn struct{ ... }
+mobile/test	type DexExecuteOut struct{ ... }
+mobile/test	type DexQuoteIn struct{ ... }
+mobile/test	type DexQuoteOut struct{ ... }
+mobile/test	type DexRoute struct{ ... }
+mobile/test	type DexStatus string
+mobile/test	type DexTx struct{ ... }
+mobile/trade	func AttachUniv3Permit(reqJSON string) string
+mobile/trade	func AutoQuote(reqJSON string) string
+mobile/trade	func BuildTx(reqJSON string) string
+mobile/trade	func BuildUniv3PermitTypedData(reqJSON string) string
+mobile/trade	func CheckTx(reqJSON string) string
+mobile/trade	func Init(configJSON string) string
+mobile/trade	func SubmitIntent(reqJSON string) string
+mobile/trade	func Version() string
+mobile/tx	    func NewAlgorandTxBuilder() *AlgorandTxBuilder
+mobile/tx	    func NewAptTxBuilder() *AptTxBuilder
+mobile/tx	    func NewCosmosTxBuilder(network string) *CosmosTxBuilder
+mobile/tx	    func NewEgldTxBuilder() *EgldTxBuilder
+mobile/tx	    func NewEvmTxBuilder(network string) *EvmTxBuilder
+mobile/tx	    func NewFilecoinTxBuilder() *FilecoinTxBuilder
+mobile/tx	    func NewKasTxBuilder() *KasTxBuilder
+mobile/tx	    func NewMobileUtxoList() *MobileUtxoList
+mobile/tx	    func NewNearTxBuilder() *NearTxBuilder
+mobile/tx	    func NewSolTxBuilder() *SolTxBuilder
+mobile/tx	    func NewSolTxBuilderFromUnsignedHex(unsignedHex string) (*SolTxBuilder, error)
+mobile/tx	    func NewStellarTxBuilder() *StellarTxBuilder
+mobile/tx	    func NewSubstrateTxBuilder(network string) *SubstrateTxBuilder
+mobile/tx	    func NewSuiTxBuilder() *SuiTxBuilder
+mobile/tx	    func NewSuiTxBuilderFromUnsignedHex(unsignedHex string) (*SuiTxBuilder, error)
+mobile/tx	    func NewTonTxBuilder() *TonTxBuilder
+mobile/tx	    func NewTrxTxBuilder() *TrxTxBuilder
+mobile/tx	    func NewTrxTxBuilderFromUnsignedHex(unsignedHex string, sender string) (*TrxTxBuilder, error)
+mobile/tx	    func NewUtxoTxBuilder(network string) *UtxoTxBuilder
+mobile/tx	    func NewUtxoTxBuilderFromUnsignedHex(unsignedHex string, publicKey string, network string) (*UtxoTxBuilder, error)
+mobile/tx	const MobileMagicAddressForZeroEVM = signing.MagicAddressForZeroEVM ...
+mobile/tx	const MobileTxStatusUnknown = signing.TxStatusUnknown ...
+mobile/tx	const MobileTxTypeTransfer = signing.TxTypeTransfer ...
+mobile/tx	func GenerateKrc20Params(in *MobileKrc20Params, pubKey []byte) (string, error)
+mobile/tx	func WipeByte(b []byte)
+mobile/tx	type AlgorandTxBuilder struct{ ... }
+mobile/tx	type AptTxBuilder struct{ ... }
+mobile/tx	type CosmosTxBuilder struct{ ... }
+mobile/tx	type EgldTxBuilder struct{ ... }
+mobile/tx	type EvmTxBuilder struct{ ... }
+mobile/tx	type FilecoinTxBuilder struct{ ... }
+mobile/tx	type KasTxBuilder struct{ ... }
+mobile/tx	type MobileKrc20Params kaspa.Krc20Params
+mobile/tx	type MobileUtxoInfo signing.UtxoInfo
+mobile/tx	type MobileUtxoList signing.UtxoList
+mobile/tx	type NearTxBuilder struct{ ... }
+mobile/tx	type SolTxBuilder struct{ ... }
+mobile/tx	type StellarTxBuilder struct{ ... }
+mobile/tx	type SubstrateTxBuilder struct{ ... }
+mobile/tx	type SuiTxBuilder struct{ ... }
+mobile/tx	type TonTxBuilder struct{ ... }
+mobile/tx	type TrxTxBuilder struct{ ... }
+mobile/tx	type UtxoTxBuilder struct{ ... }
+mobile/util	const ThresholdShares = 2 ...
+mobile/util	func AesCbcDecrypt(data, key, iv []byte) ([]byte, error)
+mobile/util	func AesCbcEncrypt(data, key, iv []byte) ([]byte, error)
+mobile/util	func AesGcmOpen(data, key, aad []byte) ([]byte, error)
+mobile/util	func AesGcmSeal(data, key, aad []byte) ([]byte, error)
+mobile/util	func Sha256Hash(data string) string
+mobile/util	func SignEcdsaEvm(privateKey []byte, hash string) (string, error)
+mobile/util	func SssEncryptJWE(publicKeyPEM, shares string) (string, error)
+mobile/util	func SssRecover(shares string) (string, error)
+mobile/util	func SssRecoverLegacy(shares string) (string, error)
+mobile/util	func SssSplit(mnemonic string) (string, error)

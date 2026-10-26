@@ -1,0 +1,95 @@
+name: Guard
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  commit-authors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Every commit must be authored by the repository owner
+        env:
+          EXPECTED: 108072157+kernelflowlabs@users.noreply.github.com
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          elif [ -n "${{ github.event.before }}" ] &&
+               git cat-file -e "${{ github.event.before }}^{commit}" 2>/dev/null; then
+            range="${{ github.event.before }}..${{ github.sha }}"
+          else
+            range="${{ github.sha }}~1..${{ github.sha }}"
+          fi
+          echo "Checking $range"
+          bad=0
+          while read -r sha ae ce; do
+            [ -z "$sha" ] && continue
+            if [ "$ae" != "$EXPECTED" ] || [ "$ce" != "$EXPECTED" ]; then
+              echo "::error::$sha is authored by $ae / committed by $ce, expected $EXPECTED"
+              bad=1
+            fi
+          done < <(git log --format='%H %ae %ce' "$range" 2>/dev/null || true)
+          if [ "$bad" -ne 0 ]; then
+            echo "A wrong identity here becomes a permanent GitHub contributor entry."
+            exit 1
+          fi
+          echo "All commit identities are correct"
+
+      - name: No AI attribution in commit messages
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            range="${{ github.sha }}~1..${{ github.sha }}"
+          fi
+          if git log --format='%B' "$range" 2>/dev/null |
+             grep -niE 'co-authored-by:.*(claude|anthropic)|noreply@anthropic\.com|generated with .*claude'; then
+            echo "::error::A Co-Authored-By trailer naming Claude adds the account 'claude' to this repository's contributor list permanently."
+            exit 1
+          fi
+          echo "No AI attribution found"
+
+  mobile-exports:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: The gomobile binding surface must match the snapshot
+        run: bash mobile/check-exports.sh
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Format
+        run: |
+          unformatted="$(gofmt -l $(git ls-files '*.go'))"
+          if [ -n "$unformatted" ]; then
+            echo "::error::gofmt needed for:"
+            echo "$unformatted"
+            exit 1
+          fi
+          echo "All tracked Go files are formatted"
