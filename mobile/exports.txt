@@ -38,16 +38,6 @@ mobile/acc	type SuiAccount struct{ ... }
 mobile/acc	type TonAccount struct{ ... }
 mobile/acc	type TrxAccount struct{ ... }
 mobile/acc	type UtxoAccount struct{ ... }
-mobile/test	    const DexStatusPending DexStatus = "Pending" ...
-mobile/test	type DexApproval struct{ ... }
-mobile/test	type DexCheckTxOut struct{ ... }
-mobile/test	type DexExecuteIn struct{ ... }
-mobile/test	type DexExecuteOut struct{ ... }
-mobile/test	type DexQuoteIn struct{ ... }
-mobile/test	type DexQuoteOut struct{ ... }
-mobile/test	type DexRoute struct{ ... }
-mobile/test	type DexStatus string
-mobile/test	type DexTx struct{ ... }
 mobile/trade	func AttachUniv3Permit(reqJSON string) string
 mobile/trade	func AutoQuote(reqJSON string) string
 mobile/trade	func BuildTx(reqJSON string) string

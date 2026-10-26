@@ -12,9 +12,22 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 snapshot="${repo_root}/mobile/exports.txt"
 
+# Only packages that git tracks are part of a release. A directory the
+# repository ignores exists on a developer's disk but not in a fresh
+# checkout, so including it would make the snapshot unreproducible.
+tracked_packages() {
+    local pkg short
+    for pkg in $(cd "${repo_root}" && go list ./mobile/...); do
+        short="${pkg#github.com/kernelflowlabs/wallet-lib/}"
+        if (cd "${repo_root}" && git ls-files -- "${short}") | grep -q '\.go$'; then
+            echo "${pkg}"
+        fi
+    done
+}
+
 collect() {
     local pkg short
-    for pkg in $(cd "${repo_root}" && go list ./mobile/... | grep -v '/example_local'); do
+    for pkg in $(tracked_packages); do
         short="${pkg#github.com/kernelflowlabs/wallet-lib/}"
         (cd "${repo_root}" && go doc -short "${pkg}" 2>/dev/null) |
             sed -E "s|^|${short}\t|"
