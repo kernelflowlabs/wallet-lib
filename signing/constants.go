@@ -39,5 +39,4 @@ const (
 	FamilyOfNear      = 13
 	FamilyOfFilecoin  = 14
 	FamilyOfAlgorand  = 15
-	FamilyOfStarknet  = 16
 )

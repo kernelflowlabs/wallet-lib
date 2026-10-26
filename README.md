@@ -45,7 +45,6 @@ products, open-sourced so it can be audited and reused.
 | Stellar       | ✅ | ✅ |
 | Filecoin      | ✅ | ✅ |
 | Algorand      | ✅ | ✅ |
-| Starknet      | ✅ | ✅ |
 
 ## Install
 
