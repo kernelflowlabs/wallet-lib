@@ -7,6 +7,9 @@ import (
 	"github.com/kernelflowlabs/wallet-lib/session"
 )
 
+// SessionChain is this chain's name in a signing session.
+const SessionChain = "tron"
+
 const DerivationPathPrefix = "m/44'/195'/0'"
 
 func DerivationPath(accountIndex int) string {
@@ -15,7 +18,7 @@ func DerivationPath(accountIndex int) string {
 
 func init() {
 	err := session.RegisterChain(session.Chain{
-		Name:   session.ChainTRX,
+		Name:   SessionChain,
 		Path:   DerivationPath,
 		Derive: key.DerivePrivateKeyECDSA,
 		Address: func(privateKey []byte) (string, error) {

@@ -5,6 +5,7 @@ package tx
 import (
 	"strings"
 
+	"github.com/kernelflowlabs/wallet-lib/session"
 	"github.com/kernelflowlabs/wallet-lib/signing/filecoin"
 )
 
@@ -72,6 +73,19 @@ func (b *FilecoinTxBuilder) SigHash() string {
 }
 
 func (b *FilecoinTxBuilder) UnsignedHex() string { return b.in.GetUnsignedHex() }
+
+func (b *FilecoinTxBuilder) SignWithSession(handle string) (string, error) {
+	var signature string
+	err := session.WithKey(handle, filecoin.SessionChain, func(privateKey []byte, _ string) error {
+		var signErr error
+		signature, signErr = b.in.Sign(privateKey)
+		return signErr
+	})
+	if err != nil {
+		return "", err
+	}
+	return signature, nil
+}
 
 func (b *FilecoinTxBuilder) Sign(privateKey []byte) (string, error) {
 	sig, err := b.in.Sign(privateKey)

@@ -75,7 +75,7 @@ func (s *EvmMessageSigner) SignWithSessionExpecting(handle, expectedDigest strin
 		return "", err
 	}
 	var signature string
-	err := session.WithKey(handle, session.ChainEVM, func(privateKey []byte, _ string) error {
+	err := session.WithKey(handle, evm.SessionChain, func(privateKey []byte, _ string) error {
 		sig, signErr := evm.PersonalSign(privateKey, s.message)
 		if signErr != nil {
 			return signErr
@@ -134,7 +134,7 @@ func (s *EvmTypedDataSigner) SignWithSessionExpecting(handle, expectedDigest str
 		return "", err
 	}
 	var signature string
-	err := session.WithKey(handle, session.ChainEVM, func(privateKey []byte, address string) error {
+	err := session.WithKey(handle, evm.SessionChain, func(privateKey []byte, address string) error {
 		sig, signErr := evm.SignTypedDataJSON(privateKey, []byte(s.typedDataJSON), address)
 		if signErr != nil {
 			return signErr

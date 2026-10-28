@@ -3,6 +3,7 @@
 package tx
 
 import (
+	"github.com/kernelflowlabs/wallet-lib/session"
 	"github.com/kernelflowlabs/wallet-lib/signing/multiversx"
 	"strings"
 )
@@ -97,6 +98,19 @@ func (b *EgldTxBuilder) SigHash() string {
 
 func (b *EgldTxBuilder) UnsignedHex() string {
 	return b.in.GetUnsignedHex()
+}
+
+func (b *EgldTxBuilder) SignWithSession(handle string) (string, error) {
+	var signature string
+	err := session.WithKey(handle, multiversx.SessionChain, func(privateKey []byte, _ string) error {
+		var signErr error
+		signature, signErr = b.in.Sign(privateKey)
+		return signErr
+	})
+	if err != nil {
+		return "", err
+	}
+	return signature, nil
 }
 
 func (b *EgldTxBuilder) Sign(privateKey []byte) (string, error) {

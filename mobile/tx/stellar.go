@@ -5,6 +5,7 @@ package tx
 import (
 	"strings"
 
+	"github.com/kernelflowlabs/wallet-lib/session"
 	"github.com/kernelflowlabs/wallet-lib/signing/stellar"
 )
 
@@ -76,6 +77,19 @@ func (b *StellarTxBuilder) SigHash() string {
 
 func (b *StellarTxBuilder) UnsignedHex() string {
 	return b.in.GetUnsignedHex()
+}
+
+func (b *StellarTxBuilder) SignWithSession(handle string) (string, error) {
+	var signature string
+	err := session.WithKey(handle, stellar.SessionChain, func(privateKey []byte, _ string) error {
+		var signErr error
+		signature, signErr = b.in.Sign(privateKey)
+		return signErr
+	})
+	if err != nil {
+		return "", err
+	}
+	return signature, nil
 }
 
 func (b *StellarTxBuilder) Sign(privateKey []byte) (string, error) {

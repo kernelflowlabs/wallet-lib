@@ -127,6 +127,7 @@ mobile/tx	func (b *AlgorandTxBuilder) SetSender(v string) *AlgorandTxBuilder
 mobile/tx	func (b *AlgorandTxBuilder) SetTxType(v string) *AlgorandTxBuilder
 mobile/tx	func (b *AlgorandTxBuilder) SigHash() string
 mobile/tx	func (b *AlgorandTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *AlgorandTxBuilder) SignWithSession(handle string) (string, error)
 mobile/tx	func (b *AlgorandTxBuilder) TxHash() string
 mobile/tx	func (b *AlgorandTxBuilder) UnsignedHex() string
 mobile/tx	func (b *AptTxBuilder) Build() error
@@ -144,6 +145,7 @@ mobile/tx	func (b *AptTxBuilder) SetSenderPubKey(pubKey string) *AptTxBuilder
 mobile/tx	func (b *AptTxBuilder) SetTxType(txType string) *AptTxBuilder
 mobile/tx	func (b *AptTxBuilder) SigHash() string
 mobile/tx	func (b *AptTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *AptTxBuilder) SignWithSession(handle string) (string, error)
 mobile/tx	func (b *AptTxBuilder) TxHash() string
 mobile/tx	func (b *AptTxBuilder) UnsignedHex() string
 mobile/tx	func (b *CosmosTxBuilder) Build() error
@@ -161,6 +163,7 @@ mobile/tx	func (b *CosmosTxBuilder) SetSequence(sequence string) *CosmosTxBuilde
 mobile/tx	func (b *CosmosTxBuilder) SetTxType(txType string) *CosmosTxBuilder
 mobile/tx	func (b *CosmosTxBuilder) SigHash() string
 mobile/tx	func (b *CosmosTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *CosmosTxBuilder) SignWithSession(handle string) (string, error)
 mobile/tx	func (b *CosmosTxBuilder) TxHash() string
 mobile/tx	func (b *CosmosTxBuilder) UnsignedHex() string
 mobile/tx	func (b *EgldTxBuilder) Build() error
@@ -177,6 +180,7 @@ mobile/tx	func (b *EgldTxBuilder) SetTxType(txType string) *EgldTxBuilder
 mobile/tx	func (b *EgldTxBuilder) SetVersion(version string) *EgldTxBuilder
 mobile/tx	func (b *EgldTxBuilder) SigHash() string
 mobile/tx	func (b *EgldTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *EgldTxBuilder) SignWithSession(handle string) (string, error)
 mobile/tx	func (b *EgldTxBuilder) TxHash() string
 mobile/tx	func (b *EgldTxBuilder) UnsignedHex() string
 mobile/tx	func (b *EvmTxBuilder) AsEIP1559(gasFeeCapWei, gasTipCapWei string) *EvmTxBuilder
@@ -211,6 +215,7 @@ mobile/tx	func (b *FilecoinTxBuilder) SetSender(v string) *FilecoinTxBuilder
 mobile/tx	func (b *FilecoinTxBuilder) SetTxType(v string) *FilecoinTxBuilder
 mobile/tx	func (b *FilecoinTxBuilder) SigHash() string
 mobile/tx	func (b *FilecoinTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *FilecoinTxBuilder) SignWithSession(handle string) (string, error)
 mobile/tx	func (b *FilecoinTxBuilder) TxHash() string
 mobile/tx	func (b *FilecoinTxBuilder) UnsignedHex() string
 mobile/tx	func (b *KasTxBuilder) Build() error
@@ -225,6 +230,7 @@ mobile/tx	func (b *KasTxBuilder) SetTxType(txType string) *KasTxBuilder
 mobile/tx	func (b *KasTxBuilder) SetUtxos(utxos *MobileUtxoList) *KasTxBuilder
 mobile/tx	func (b *KasTxBuilder) SigHash() string
 mobile/tx	func (b *KasTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *KasTxBuilder) SignWithSession(handle string) (string, error)
 mobile/tx	func (b *KasTxBuilder) TxHash() string
 mobile/tx	func (b *KasTxBuilder) UnsignedHex() string
 mobile/tx	func (b *NearTxBuilder) Build() error
@@ -240,6 +246,7 @@ mobile/tx	func (b *NearTxBuilder) SetSenderPublicKey(pubKeyHex string) *NearTxBu
 mobile/tx	func (b *NearTxBuilder) SetTxType(txType string) *NearTxBuilder
 mobile/tx	func (b *NearTxBuilder) SigHash() string
 mobile/tx	func (b *NearTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *NearTxBuilder) SignWithSession(handle string) (string, error)
 mobile/tx	func (b *NearTxBuilder) TxHash() string
 mobile/tx	func (b *NearTxBuilder) UnsignedHex() string
 mobile/tx	func (b *SolTxBuilder) Build() error
@@ -271,6 +278,7 @@ mobile/tx	func (b *StellarTxBuilder) SetSequence(sequence string) *StellarTxBuil
 mobile/tx	func (b *StellarTxBuilder) SetTxType(txType string) *StellarTxBuilder
 mobile/tx	func (b *StellarTxBuilder) SigHash() string
 mobile/tx	func (b *StellarTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *StellarTxBuilder) SignWithSession(handle string) (string, error)
 mobile/tx	func (b *StellarTxBuilder) TxHash() string
 mobile/tx	func (b *StellarTxBuilder) UnsignedHex() string
 mobile/tx	func (b *SubstrateTxBuilder) Build() error
@@ -285,6 +293,7 @@ mobile/tx	func (b *SubstrateTxBuilder) SetSender(addr string) *SubstrateTxBuilde
 mobile/tx	func (b *SubstrateTxBuilder) SetTxType(txType string) *SubstrateTxBuilder
 mobile/tx	func (b *SubstrateTxBuilder) SigHash() string
 mobile/tx	func (b *SubstrateTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *SubstrateTxBuilder) SignWithSession(handle string) (string, error)
 mobile/tx	func (b *SubstrateTxBuilder) TxHash() string
 mobile/tx	func (b *SubstrateTxBuilder) UnsignedHex() string
 mobile/tx	func (b *SuiTxBuilder) Build() error
@@ -300,6 +309,7 @@ mobile/tx	func (b *SuiTxBuilder) SetSender(addr string) *SuiTxBuilder
 mobile/tx	func (b *SuiTxBuilder) SetTxType(txType string) *SuiTxBuilder
 mobile/tx	func (b *SuiTxBuilder) SigHash() string
 mobile/tx	func (b *SuiTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *SuiTxBuilder) SignWithSession(handle string) (string, error)
 mobile/tx	func (b *SuiTxBuilder) TxHash() string
 mobile/tx	func (b *SuiTxBuilder) UnsignedHex() string
 mobile/tx	func (b *TonTxBuilder) Build() error
@@ -316,6 +326,7 @@ mobile/tx	func (b *TonTxBuilder) SetSenderPublicKey(pubKeyHex string) *TonTxBuil
 mobile/tx	func (b *TonTxBuilder) SetTxType(txType string) *TonTxBuilder
 mobile/tx	func (b *TonTxBuilder) SigHash() string
 mobile/tx	func (b *TonTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *TonTxBuilder) SignWithSession(handle string) (string, error)
 mobile/tx	func (b *TonTxBuilder) TxHash() string
 mobile/tx	func (b *TonTxBuilder) UnsignedHex() string
 mobile/tx	func (b *TrxTxBuilder) Build() error
@@ -347,6 +358,7 @@ mobile/tx	func (b *UtxoTxBuilder) SetTxType(txType string) *UtxoTxBuilder
 mobile/tx	func (b *UtxoTxBuilder) SetUtxos(utxos *MobileUtxoList) *UtxoTxBuilder
 mobile/tx	func (b *UtxoTxBuilder) SigHash() string
 mobile/tx	func (b *UtxoTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *UtxoTxBuilder) SignWithSession(handle string) (string, error)
 mobile/tx	func (b *UtxoTxBuilder) TxHash() string
 mobile/tx	func (b *UtxoTxBuilder) UnsignedHex() string
 mobile/tx	func (m *MobileUtxoList) AddUtxoInfo(info *MobileUtxoInfo)
@@ -365,6 +377,9 @@ mobile/tx	func (s *EvmTypedDataSigner) Digest() string
 mobile/tx	func (s *EvmTypedDataSigner) Sign(privateKey []byte, expectedSigner string) (string, error)
 mobile/tx	func (s *EvmTypedDataSigner) SignWithSession(handle string) (string, error)
 mobile/tx	func (s *EvmTypedDataSigner) SignWithSessionExpecting(handle, expectedDigest string) (string, error)
+mobile/tx	func DescribeEvmCall(requestJSON string) string
+mobile/tx	func DescribeSolTransaction(tx []byte, ownerAddress string) string
+mobile/tx	func DescribeTypedData(typedDataJSON string) string
 mobile/tx	func GenerateKrc20Params(in *MobileKrc20Params, pubKey []byte) (string, error)
 mobile/tx	func NewAlgorandTxBuilder() *AlgorandTxBuilder
 mobile/tx	func NewAptTxBuilder() *AptTxBuilder
@@ -388,6 +403,8 @@ mobile/tx	func NewTrxTxBuilder() *TrxTxBuilder
 mobile/tx	func NewTrxTxBuilderFromUnsignedHex(unsignedHex string, sender string) (*TrxTxBuilder, error)
 mobile/tx	func NewUtxoTxBuilder(network string) *UtxoTxBuilder
 mobile/tx	func NewUtxoTxBuilderFromUnsignedHex(unsignedHex string, publicKey string, network string) (*UtxoTxBuilder, error)
+mobile/tx	func SolSignMessage(handle string, message []byte) (string, error)
+mobile/tx	func SolSignSerializedTransaction(handle string, tx []byte) (string, error)
 mobile/tx	func WipeByte(b []byte)
 mobile/tx	type AlgorandTxBuilder struct{ ... }
 mobile/tx	type AptTxBuilder struct{ ... }
@@ -414,12 +431,16 @@ mobile/util	func AesCbcDecrypt(data, key, iv []byte) ([]byte, error)
 mobile/util	func AesCbcEncrypt(data, key, iv []byte) ([]byte, error)
 mobile/util	func AesGcmOpen(data, key, aad []byte) ([]byte, error)
 mobile/util	func AesGcmSeal(data, key, aad []byte) ([]byte, error)
+mobile/util	func BindingRevision() int
+mobile/util	func SessionChains() string
 mobile/util	func SessionInfo(handle string) string
 mobile/util	func SessionLock(handle string)
 mobile/util	func SessionLockAll()
 mobile/util	func SessionTouch(handle string) bool
 mobile/util	func SessionUnlock(keystoreJSON string, password []byte, expectedEvmAddress string, accountIndex, ttlSeconds, idleSeconds int) (string, error)
+mobile/util	func SessionUnlockChains(keystoreJSON string, password []byte, expectedEvmAddress, chains string, accountIndex, ttlSeconds, idleSeconds int) (string, error)
 mobile/util	func SessionUnlockMnemonic(mnemonic []byte, expectedEvmAddress string, accountIndex, ttlSeconds, idleSeconds int) (string, error)
+mobile/util	func SessionUnlockMnemonicChains(mnemonic []byte, expectedEvmAddress, chains string, accountIndex, ttlSeconds, idleSeconds int) (string, error)
 mobile/util	func Sha256Hash(data string) string
 mobile/util	func SignEcdsaEvm(privateKey []byte, hash string) (string, error)
 mobile/util	func SssEncryptJWE(publicKeyPEM, shares string) (string, error)

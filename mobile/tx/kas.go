@@ -3,6 +3,7 @@
 package tx
 
 import (
+	"github.com/kernelflowlabs/wallet-lib/session"
 	"github.com/kernelflowlabs/wallet-lib/signing"
 	"github.com/kernelflowlabs/wallet-lib/signing/kaspa"
 	"strings"
@@ -76,6 +77,19 @@ func (b *KasTxBuilder) SigHash() string {
 
 func (b *KasTxBuilder) UnsignedHex() string {
 	return b.in.GetUnsignedHex()
+}
+
+func (b *KasTxBuilder) SignWithSession(handle string) (string, error) {
+	var signature string
+	err := session.WithKey(handle, kaspa.SessionChain, func(privateKey []byte, _ string) error {
+		var signErr error
+		signature, signErr = b.in.Sign(privateKey)
+		return signErr
+	})
+	if err != nil {
+		return "", err
+	}
+	return signature, nil
 }
 
 func (b *KasTxBuilder) Sign(privateKey []byte) (string, error) {

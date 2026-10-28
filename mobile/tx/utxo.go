@@ -3,6 +3,8 @@
 package tx
 
 import (
+	"fmt"
+	"github.com/kernelflowlabs/wallet-lib/session"
 	"github.com/kernelflowlabs/wallet-lib/signing"
 	"github.com/kernelflowlabs/wallet-lib/signing/utxo"
 	"strings"
@@ -11,11 +13,15 @@ import (
 type UtxoTxBuilder struct {
 	in  *utxo.TxBuilder
 	err error
+	// network decides which session chain holds this builder's key: one
+	// package serves several chains here, and they do not share an address.
+	network string
 }
 
 func NewUtxoTxBuilder(network string) *UtxoTxBuilder {
 	return &UtxoTxBuilder{
-		in: utxo.NewTxBuilder(&utxo.Ingredient{}, network),
+		in:      utxo.NewTxBuilder(&utxo.Ingredient{}, network),
+		network: network,
 	}
 }
 
@@ -25,7 +31,8 @@ func NewUtxoTxBuilderFromUnsignedHex(unsignedHex string, publicKey string, netwo
 		return nil, err
 	}
 	return &UtxoTxBuilder{
-		in: txBuilder,
+		in:      txBuilder,
+		network: network,
 	}, nil
 }
 
@@ -86,6 +93,23 @@ func (b *UtxoTxBuilder) SigHash() string {
 
 func (b *UtxoTxBuilder) UnsignedHex() string {
 	return b.in.GetUnsignedHex()
+}
+
+func (b *UtxoTxBuilder) SignWithSession(handle string) (string, error) {
+	chain, ok := utxo.SessionChainForNetwork(b.network)
+	if !ok {
+		return "", fmt.Errorf("invalid_input: no session chain for utxo network %q", b.network)
+	}
+	var signature string
+	err := session.WithKey(handle, chain, func(privateKey []byte, _ string) error {
+		var signErr error
+		signature, signErr = b.in.Sign(privateKey)
+		return signErr
+	})
+	if err != nil {
+		return "", err
+	}
+	return signature, nil
 }
 
 func (b *UtxoTxBuilder) Sign(privateKey []byte) (string, error) {

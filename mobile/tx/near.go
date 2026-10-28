@@ -5,6 +5,7 @@ package tx
 import (
 	"strings"
 
+	"github.com/kernelflowlabs/wallet-lib/session"
 	"github.com/kernelflowlabs/wallet-lib/signing/near"
 )
 
@@ -81,6 +82,19 @@ func (b *NearTxBuilder) SigHash() string {
 
 func (b *NearTxBuilder) UnsignedHex() string {
 	return b.in.GetUnsignedHex()
+}
+
+func (b *NearTxBuilder) SignWithSession(handle string) (string, error) {
+	var signature string
+	err := session.WithKey(handle, near.SessionChain, func(privateKey []byte, _ string) error {
+		var signErr error
+		signature, signErr = b.in.Sign(privateKey)
+		return signErr
+	})
+	if err != nil {
+		return "", err
+	}
+	return signature, nil
 }
 
 func (b *NearTxBuilder) Sign(privateKey []byte) (string, error) {

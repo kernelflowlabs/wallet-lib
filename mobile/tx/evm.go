@@ -111,7 +111,7 @@ func (b *EvmTxBuilder) Sign(privateKey []byte) (string, error) {
 
 func (b *EvmTxBuilder) SignWithSession(handle string) (string, error) {
 	var signature string
-	err := session.WithKey(handle, session.ChainEVM, func(privateKey []byte, _ string) error {
+	err := session.WithKey(handle, evm.SessionChain, func(privateKey []byte, _ string) error {
 		var signErr error
 		signature, signErr = b.in.Sign(privateKey)
 		return signErr

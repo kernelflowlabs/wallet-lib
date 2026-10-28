@@ -3,19 +3,25 @@
 package tx
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/kernelflowlabs/wallet-lib/session"
 	"github.com/kernelflowlabs/wallet-lib/signing/cosmos"
 )
 
 type CosmosTxBuilder struct {
 	in  *cosmos.TxBuilder
 	err error
+	// network decides which session chain holds this builder's key: one
+	// package serves several chains here, and they do not share an address.
+	network string
 }
 
 func NewCosmosTxBuilder(network string) *CosmosTxBuilder {
 	return &CosmosTxBuilder{
-		in: cosmos.NewTxBuilder(&cosmos.Ingredient{AccountInfo: &cosmos.AccountInfo{}}, network),
+		in:      cosmos.NewTxBuilder(&cosmos.Ingredient{AccountInfo: &cosmos.AccountInfo{}}, network),
+		network: network,
 	}
 }
 
@@ -91,6 +97,23 @@ func (b *CosmosTxBuilder) SigHash() string {
 
 func (b *CosmosTxBuilder) UnsignedHex() string {
 	return b.in.GetUnsignedHex()
+}
+
+func (b *CosmosTxBuilder) SignWithSession(handle string) (string, error) {
+	chain, ok := cosmos.SessionChainForNetwork(b.network)
+	if !ok {
+		return "", fmt.Errorf("invalid_input: no session chain for cosmos network %q", b.network)
+	}
+	var signature string
+	err := session.WithKey(handle, chain, func(privateKey []byte, _ string) error {
+		var signErr error
+		signature, signErr = b.in.Sign(privateKey)
+		return signErr
+	})
+	if err != nil {
+		return "", err
+	}
+	return signature, nil
 }
 
 func (b *CosmosTxBuilder) Sign(privateKey []byte) (string, error) {
