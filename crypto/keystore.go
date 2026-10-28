@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/kernelflowlabs/wallet-lib/crypto/bip"
 	"io"
+	"unicode/utf8"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
@@ -17,27 +18,33 @@ import (
 )
 
 func WriteToKeyStore(name, text, password string, isMn bool) (string, error) {
+	return WriteToKeyStoreBytes(name, []byte(text), []byte(password), isMn)
+}
+
+func WriteToKeyStoreBytes(name string, text, password []byte, isMn bool) (string, error) {
 	address := "address"
 	path := "path"
 	coin := 0
 	type1 := "any"
 	if isMn {
-		if !IsValidMnemonic(text) {
+		if !IsValidMnemonic(string(text)) {
 			return "", fmt.Errorf("invalid mnemonic")
 		}
 		coin = 60
 		type1 = "mnemonic"
 		path = "m/44'/60'/0'/0/0"
 		{
-			seed, err := bip.NewSeedWithErrorChecking(text, "")
+			seed, err := bip.NewSeedWithErrorChecking(string(text), "")
 			if err != nil {
 				return "", fmt.Errorf("failed to NewSeedWithErrorChecking, err=%v", err)
 			}
+			defer Wipe(seed)
 
 			k, err := bip.SeedToKeyForECDSA(seed, path)
 			if err != nil {
 				return "", fmt.Errorf("failed to SeedToECDSAKey, err=%v", err)
 			}
+			defer Wipe(k.Key)
 			privateKey := hex.EncodeToString(k.Key)
 			ecdsaKey, err := crypto.HexToECDSA(privateKey)
 			if err != nil {
@@ -52,7 +59,7 @@ func WriteToKeyStore(name, text, password string, isMn bool) (string, error) {
 		}
 	}
 
-	err := validatePassword(password)
+	err := validatePasswordBytes(password)
 	if err != nil {
 		return "", err
 	}
@@ -66,15 +73,11 @@ func WriteToKeyStore(name, text, password string, isMn bool) (string, error) {
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
 		return "", fmt.Errorf("failed to generate salt")
 	}
-	derivedKey, err := scrypt.Key([]byte(password), salt, scryptN, scryptR, scryptP, dkLen)
+	derivedKey, err := scrypt.Key(password, salt, scryptN, scryptR, scryptP, dkLen)
 	if err != nil {
 		return "", err
 	}
-	defer func() {
-		for i := range derivedKey {
-			derivedKey[i] = 0
-		}
-	}()
+	defer Wipe(derivedKey)
 
 	encryptKey := derivedKey[:16]
 
@@ -83,7 +86,7 @@ func WriteToKeyStore(name, text, password string, isMn bool) (string, error) {
 		return "", fmt.Errorf("reading from crypto/rand failed, err=%v", err.Error())
 	}
 
-	cipherText, err := AesEncryptCTR([]byte(text), encryptKey, iv)
+	cipherText, err := AesEncryptCTR(text, encryptKey, iv)
 	if err != nil {
 		return "", err
 	}
@@ -131,19 +134,28 @@ func WriteToKeyStore(name, text, password string, isMn bool) (string, error) {
 }
 
 func ReadFromKeyStore(ksString, password string, isMn bool) (string, error) {
-	ks := &KeyStore{}
-	if err := json.Unmarshal([]byte(ksString), ks); err != nil {
-		return "", err
-	}
-	err := validatePassword(password)
+	clearText, err := ReadFromKeyStoreBytes(ksString, []byte(password), isMn)
 	if err != nil {
 		return "", err
 	}
+	defer Wipe(clearText)
+	return string(clearText), nil
+}
+
+func ReadFromKeyStoreBytes(ksString string, password []byte, isMn bool) ([]byte, error) {
+	ks := &KeyStore{}
+	if err := json.Unmarshal([]byte(ksString), ks); err != nil {
+		return nil, err
+	}
+	err := validatePasswordBytes(password)
+	if err != nil {
+		return nil, err
+	}
 	if ks.Crypto.Kdf != "scrypt" {
-		return "", fmt.Errorf("unsupported kdf: %s", ks.Crypto.Kdf)
+		return nil, fmt.Errorf("unsupported kdf: %s", ks.Crypto.Kdf)
 	}
 	if ks.Crypto.Cipher != "aes-128-ctr" {
-		return "", fmt.Errorf("unsupported cipher: %s", ks.Crypto.Cipher)
+		return nil, fmt.Errorf("unsupported cipher: %s", ks.Crypto.Cipher)
 	}
 
 	scryptN := ks.Crypto.Kdfparams.N
@@ -151,57 +163,53 @@ func ReadFromKeyStore(ksString, password string, isMn bool) (string, error) {
 	scryptR := ks.Crypto.Kdfparams.R
 	dkLen := ks.Crypto.Kdfparams.Dklen
 	if dkLen != 32 {
-		return "", fmt.Errorf("unsupported dklen: %d", dkLen)
+		return nil, fmt.Errorf("unsupported dklen: %d", dkLen)
 	}
 	if err := checkScryptParams(scryptN, scryptR, scryptP); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	salt, err := hex.DecodeString(ks.Crypto.Kdfparams.Salt)
 	if err != nil {
-		return "", fmt.Errorf("invalid salt: %w", err)
+		return nil, fmt.Errorf("invalid salt: %w", err)
 	}
 
-	derivedKey, err := scrypt.Key([]byte(password), salt, scryptN, scryptR, scryptP, dkLen)
+	derivedKey, err := scrypt.Key(password, salt, scryptN, scryptR, scryptP, dkLen)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	defer func() {
-		for i := range derivedKey {
-			derivedKey[i] = 0
-		}
-	}()
+	defer Wipe(derivedKey)
 
 	ct, err := hex.DecodeString(ks.Crypto.Ciphertext)
 	if err != nil {
-		return "", fmt.Errorf("invalid ciphertext: %w", err)
+		return nil, fmt.Errorf("invalid ciphertext: %w", err)
 	}
 	expectedMAC, err := hex.DecodeString(ks.Crypto.Mac)
 	if err != nil {
-		return "", fmt.Errorf("invalid mac: %w", err)
+		return nil, fmt.Errorf("invalid mac: %w", err)
 	}
 	computedMAC := crypto.Keccak256(derivedKey[16:32], ct)
 	if subtle.ConstantTimeCompare(computedMAC, expectedMAC) != 1 {
-		return "", fmt.Errorf("invalid password or corrupted keystore (MAC mismatch)")
+		return nil, fmt.Errorf("invalid password or corrupted keystore (MAC mismatch)")
 	}
 
 	iv, err := hex.DecodeString(ks.Crypto.Cipherparams.Iv)
 	if err != nil {
-		return "", fmt.Errorf("invalid iv: %w", err)
+		return nil, fmt.Errorf("invalid iv: %w", err)
 	}
 	encryptKey := derivedKey[:16]
 	clearText, err := AesDecryptCTR(ct, encryptKey, iv)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	mn := string(clearText)
 	if isMn {
-		if !IsValidMnemonic(mn) {
-			return "", fmt.Errorf("got invalid mnemonics")
+		if !IsValidMnemonic(string(clearText)) {
+			Wipe(clearText)
+			return nil, fmt.Errorf("got invalid mnemonics")
 		}
 	}
-	return mn, nil
+	return clearText, nil
 }
 
 func ReadFromGethKeyStore(ksString string, password string) (string, error) {
@@ -264,6 +272,13 @@ func ReadFromGethKeyStore(ksString string, password string) (string, error) {
 
 func validatePassword(pw string) error {
 	if len([]rune(pw)) < 8 {
+		return fmt.Errorf("password too short; use at least 8 characters")
+	}
+	return nil
+}
+
+func validatePasswordBytes(pw []byte) error {
+	if utf8.RuneCount(pw) < 8 {
 		return fmt.Errorf("password too short; use at least 8 characters")
 	}
 	return nil

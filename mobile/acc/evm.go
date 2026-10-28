@@ -38,8 +38,8 @@ func init() {
 	})
 }
 
-func (a *EvmAccount) SignTypedDataJSON(typedDataJSON string) (string, error) {
-	sig, err := evm.SignTypedDataJSON(a.in.PrivateKey(), []byte(typedDataJSON))
+func (a *EvmAccount) SignTypedDataJSON(expectedSigner, typedDataJSON string) (string, error) {
+	sig, err := evm.SignTypedDataJSON(a.in.PrivateKey(), []byte(typedDataJSON), expectedSigner)
 	if err != nil {
 		return "", err
 	}

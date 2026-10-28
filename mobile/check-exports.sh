@@ -25,17 +25,40 @@ tracked_packages() {
     done
 }
 
+# "go doc -short" lists package-level declarations but not methods, and every
+# exported method on a bound type is a method the AAR and the xcframework
+# publish too. "go doc -all" prints those at column 0, so the two together
+# cover the whole surface.
 collect() {
     local pkg short
     for pkg in $(tracked_packages); do
         short="${pkg#github.com/kernelflowlabs/wallet-lib/}"
-        (cd "${repo_root}" && go doc -short "${pkg}" 2>/dev/null) |
-            sed -E "s|^|${short}\t|"
-    done | LC_ALL=C sort
+        {
+            # Types, constants and variables. Functions are dropped here because
+            # "go doc -short" abbreviates long parameter lists to "..."; they
+            # come from the full listing below instead, so every symbol appears
+            # exactly once and in full.
+            (cd "${repo_root}" && go doc -short "${pkg}" 2>/dev/null) |
+                { grep -vE '^[[:space:]]*func ' || true; }
+            # Functions and methods, with complete signatures.
+            (cd "${repo_root}" && go doc -all "${pkg}" 2>/dev/null) |
+                { grep -E '^func ' || true; }
+        } | sed -E 's/^[[:space:]]+//' | sed -E "s|^|${short}\t|"
+    done | LC_ALL=C sort -u
 }
 
+# Collected into a temporary file first: a failure half way through must not
+# leave a truncated snapshot behind, because a short snapshot silently stops
+# guarding everything it lost.
 if [[ "${1:-}" == "--update" ]]; then
-    collect > "${snapshot}"
+    staged="$(mktemp)"
+    trap 'rm -f "${staged}"' EXIT
+    collect > "${staged}"
+    if [[ ! -s "${staged}" ]]; then
+        echo "Refusing to write an empty snapshot" >&2
+        exit 1
+    fi
+    cat "${staged}" > "${snapshot}"
     echo "Snapshot updated: $(wc -l < "${snapshot}") exported symbols"
     exit 0
 fi

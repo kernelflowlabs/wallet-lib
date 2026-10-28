@@ -3,15 +3,29 @@ package evm
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/kernelflowlabs/wallet-lib/crypto/key"
 )
 
-func SignTypedDataJSON(privateKey []byte, typedDataJSON []byte) ([]byte, error) {
+func SignTypedDataJSON(privateKey []byte, typedDataJSON []byte, expectedSigner string) ([]byte, error) {
 	digest, err := HashTypedDataJSON(typedDataJSON)
 	if err != nil {
 		return nil, err
+	}
+	if expectedSigner != "" {
+		pub, err := key.PrivateKey2PublicKeyECDSA(privateKey)
+		if err != nil {
+			return nil, fmt.Errorf("derive public key: %w", err)
+		}
+		signer, err := PublicKey2Address(pub)
+		if err != nil {
+			return nil, fmt.Errorf("derive signer address: %w", err)
+		}
+		if !strings.EqualFold(signer, expectedSigner) {
+			return nil, fmt.Errorf("private key does not match signer %s", expectedSigner)
+		}
 	}
 	sig, err := key.SignWithPrivateKeyECDSAForEVM(privateKey, digest)
 	if err != nil {

@@ -50,7 +50,7 @@ func main() {
 	}
 	fmt.Println("1. address from mnemonic:", a.Address())
 
-	sig, err := a.SignTypedDataJSON(typedData)
+	sig, err := a.SignTypedDataJSON(a.Address(), typedData)
 	if err != nil {
 		log.Fatalf("sign typed data: %v", err)
 	}

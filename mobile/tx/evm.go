@@ -3,6 +3,7 @@
 package tx
 
 import (
+	"github.com/kernelflowlabs/wallet-lib/session"
 	"github.com/kernelflowlabs/wallet-lib/signing/evm"
 	"strings"
 )
@@ -106,6 +107,19 @@ func (b *EvmTxBuilder) Sign(privateKey []byte) (string, error) {
 	}
 	WipeByte(privateKey)
 	return sig, nil
+}
+
+func (b *EvmTxBuilder) SignWithSession(handle string) (string, error) {
+	var signature string
+	err := session.WithKey(handle, session.ChainEVM, func(privateKey []byte, _ string) error {
+		var signErr error
+		signature, signErr = b.in.Sign(privateKey)
+		return signErr
+	})
+	if err != nil {
+		return "", err
+	}
+	return signature, nil
 }
 
 func (b *EvmTxBuilder) ConcatSignature(signatureHex string) (string, error) {

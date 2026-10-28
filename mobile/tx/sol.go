@@ -3,6 +3,7 @@
 package tx
 
 import (
+	"github.com/kernelflowlabs/wallet-lib/session"
 	"github.com/kernelflowlabs/wallet-lib/signing/solana"
 	"strings"
 )
@@ -114,6 +115,19 @@ func (b *SolTxBuilder) Sign(privateKey []byte) (string, error) {
 	}
 	WipeByte(privateKey)
 	return sig, nil
+}
+
+func (b *SolTxBuilder) SignWithSession(handle string) (string, error) {
+	var signature string
+	err := session.WithKey(handle, session.ChainSOL, func(privateKey []byte, _ string) error {
+		var signErr error
+		signature, signErr = b.in.Sign(privateKey)
+		return signErr
+	})
+	if err != nil {
+		return "", err
+	}
+	return signature, nil
 }
 
 func (b *SolTxBuilder) ConcatSignature(signatureHex string) (string, error) {

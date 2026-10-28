@@ -1,23 +1,88 @@
-mobile/acc	    func NewAlgorandFromMnemonic(mnemonic, path string) (*AlgorandAccount, error)
-mobile/acc	    func NewAptFromMnemonic(mnemonic, path string) (*AptAccount, error)
-mobile/acc	    func NewCosmosFromMnemonic(mnemonic, path, network string) (*CosmosAccount, error)
-mobile/acc	    func NewEgldFromMnemonic(mnemonic, path string) (*EgldAccount, error)
-mobile/acc	    func NewEvmFromMnemonic(mnemonic, path string) (*EvmAccount, error)
-mobile/acc	    func NewFilecoinFromMnemonic(mnemonic, path string) (*FilecoinAccount, error)
-mobile/acc	    func NewKasFromMnemonic(mnemonic, path string) (*KasAccount, error)
-mobile/acc	    func NewNearFromMnemonic(mnemonic, path string) (*NearAccount, error)
-mobile/acc	    func NewSolFromMnemonic(mnemonic, path string) (*SolAccount, error)
-mobile/acc	    func NewStellarFromMnemonic(mnemonic, path string) (*StellarAccount, error)
-mobile/acc	    func NewSubstrateFromMnemonic(mnemonic, path, network string) (*SubstrateAccount, error)
-mobile/acc	    func NewSubstrateFromMnemonicStandard(mnemonic, path, network string) (*SubstrateAccount, error)
-mobile/acc	    func NewSuiFromMnemonic(mnemonic, path string) (*SuiAccount, error)
-mobile/acc	    func NewTonFromMnemonic(mnemonic, path string) (*TonAccount, error)
-mobile/acc	    func NewTrxFromMnemonic(mnemonic, path string) (*TrxAccount, error)
-mobile/acc	    func NewUtxoFromMnemonic(mnemonic, path, network string) (*UtxoAccount, error)
-mobile/acc	    func NewUtxoFromPrivateKeyHex(privateKey, network string) (*UtxoAccount, error)
 mobile/acc	const SubstrateNetworkEnumForDOT string = substrate.NetworkEnumForDOT ...
 mobile/acc	const UtxoNetworkEnumForBTC string = utxo.NetworkEnumForBTC ...
+mobile/acc	func (a *AlgorandAccount) Address() string
+mobile/acc	func (a *AlgorandAccount) PrivateKey() []byte
+mobile/acc	func (a *AlgorandAccount) PublicKey() []byte
+mobile/acc	func (a *AlgorandAccount) Wipe()
+mobile/acc	func (a *AptAccount) Address() string
+mobile/acc	func (a *AptAccount) PrivateKey() []byte
+mobile/acc	func (a *AptAccount) PublicKey() []byte
+mobile/acc	func (a *AptAccount) PublicKeyHex() string
+mobile/acc	func (a *AptAccount) Wipe()
+mobile/acc	func (a *CosmosAccount) Address() string
+mobile/acc	func (a *CosmosAccount) PrivateKey() []byte
+mobile/acc	func (a *CosmosAccount) PublicKey() []byte
+mobile/acc	func (a *CosmosAccount) Wipe()
+mobile/acc	func (a *EgldAccount) Address() string
+mobile/acc	func (a *EgldAccount) PrivateKey() []byte
+mobile/acc	func (a *EgldAccount) PublicKey() []byte
+mobile/acc	func (a *EgldAccount) PublicKeyHex() string
+mobile/acc	func (a *EgldAccount) Wipe()
+mobile/acc	func (a *EvmAccount) Address() string
+mobile/acc	func (a *EvmAccount) PrivateKey() []byte
+mobile/acc	func (a *EvmAccount) PublicKey() []byte
+mobile/acc	func (a *EvmAccount) SignTypedDataJSON(expectedSigner, typedDataJSON string) (string, error)
+mobile/acc	func (a *EvmAccount) Wipe()
+mobile/acc	func (a *FilecoinAccount) Address() string
+mobile/acc	func (a *FilecoinAccount) PrivateKey() []byte
+mobile/acc	func (a *FilecoinAccount) PublicKey() []byte
+mobile/acc	func (a *FilecoinAccount) Wipe()
+mobile/acc	func (a *KasAccount) Address() string
+mobile/acc	func (a *KasAccount) PrivateKey() []byte
+mobile/acc	func (a *KasAccount) PublicKey() []byte
+mobile/acc	func (a *KasAccount) Wipe()
+mobile/acc	func (a *NearAccount) Address() string
+mobile/acc	func (a *NearAccount) PrivateKey() []byte
+mobile/acc	func (a *NearAccount) PublicKey() []byte
+mobile/acc	func (a *NearAccount) PublicKeyBase58() string
+mobile/acc	func (a *NearAccount) Wipe()
+mobile/acc	func (a *SolAccount) Address() string
+mobile/acc	func (a *SolAccount) PrivateKey() []byte
+mobile/acc	func (a *SolAccount) PublicKey() []byte
+mobile/acc	func (a *SolAccount) Wipe()
+mobile/acc	func (a *StellarAccount) Address() string
+mobile/acc	func (a *StellarAccount) PrivateKey() []byte
+mobile/acc	func (a *StellarAccount) PublicKey() []byte
+mobile/acc	func (a *StellarAccount) Wipe()
+mobile/acc	func (a *SubstrateAccount) Address() string
+mobile/acc	func (a *SubstrateAccount) PrivateKey() []byte
+mobile/acc	func (a *SubstrateAccount) PublicKey() []byte
+mobile/acc	func (a *SubstrateAccount) Wipe()
+mobile/acc	func (a *SuiAccount) Address() string
+mobile/acc	func (a *SuiAccount) PrivateKey() []byte
+mobile/acc	func (a *SuiAccount) PublicKey() []byte
+mobile/acc	func (a *SuiAccount) Wipe()
+mobile/acc	func (a *TonAccount) Address() string
+mobile/acc	func (a *TonAccount) PrivateKey() []byte
+mobile/acc	func (a *TonAccount) PublicKey() []byte
+mobile/acc	func (a *TonAccount) Wipe()
+mobile/acc	func (a *TrxAccount) Address() string
+mobile/acc	func (a *TrxAccount) PrivateKey() []byte
+mobile/acc	func (a *TrxAccount) PublicKey() []byte
+mobile/acc	func (a *TrxAccount) Wipe()
+mobile/acc	func (a *UtxoAccount) Address() string
+mobile/acc	func (a *UtxoAccount) PrivateKey() []byte
+mobile/acc	func (a *UtxoAccount) PublicKey() []byte
+mobile/acc	func (a *UtxoAccount) PublicKeyHex() string
+mobile/acc	func (a *UtxoAccount) Wipe()
 mobile/acc	func GenerateMnemonic() (string, error)
+mobile/acc	func NewAlgorandFromMnemonic(mnemonic, path string) (*AlgorandAccount, error)
+mobile/acc	func NewAptFromMnemonic(mnemonic, path string) (*AptAccount, error)
+mobile/acc	func NewCosmosFromMnemonic(mnemonic, path, network string) (*CosmosAccount, error)
+mobile/acc	func NewEgldFromMnemonic(mnemonic, path string) (*EgldAccount, error)
+mobile/acc	func NewEvmFromMnemonic(mnemonic, path string) (*EvmAccount, error)
+mobile/acc	func NewFilecoinFromMnemonic(mnemonic, path string) (*FilecoinAccount, error)
+mobile/acc	func NewKasFromMnemonic(mnemonic, path string) (*KasAccount, error)
+mobile/acc	func NewNearFromMnemonic(mnemonic, path string) (*NearAccount, error)
+mobile/acc	func NewSolFromMnemonic(mnemonic, path string) (*SolAccount, error)
+mobile/acc	func NewStellarFromMnemonic(mnemonic, path string) (*StellarAccount, error)
+mobile/acc	func NewSubstrateFromMnemonic(mnemonic, path, network string) (*SubstrateAccount, error)
+mobile/acc	func NewSubstrateFromMnemonicStandard(mnemonic, path, network string) (*SubstrateAccount, error)
+mobile/acc	func NewSuiFromMnemonic(mnemonic, path string) (*SuiAccount, error)
+mobile/acc	func NewTonFromMnemonic(mnemonic, path string) (*TonAccount, error)
+mobile/acc	func NewTrxFromMnemonic(mnemonic, path string) (*TrxAccount, error)
+mobile/acc	func NewUtxoFromMnemonic(mnemonic, path, network string) (*UtxoAccount, error)
+mobile/acc	func NewUtxoFromPrivateKeyHex(privateKey, network string) (*UtxoAccount, error)
 mobile/acc	func PrivateKeyHexToWIF(privateKey string) (string, error)
 mobile/acc	func PrivateKeyWIFToHex(privateKey string) (string, error)
 mobile/acc	func ReadFromKeyStore(ksString, password string, isMn bool) (string, error)
@@ -46,36 +111,291 @@ mobile/trade	func CheckTx(reqJSON string) string
 mobile/trade	func Init(configJSON string) string
 mobile/trade	func SubmitIntent(reqJSON string) string
 mobile/trade	func Version() string
-mobile/tx	    func NewAlgorandTxBuilder() *AlgorandTxBuilder
-mobile/tx	    func NewAptTxBuilder() *AptTxBuilder
-mobile/tx	    func NewCosmosTxBuilder(network string) *CosmosTxBuilder
-mobile/tx	    func NewEgldTxBuilder() *EgldTxBuilder
-mobile/tx	    func NewEvmTxBuilder(network string) *EvmTxBuilder
-mobile/tx	    func NewFilecoinTxBuilder() *FilecoinTxBuilder
-mobile/tx	    func NewKasTxBuilder() *KasTxBuilder
-mobile/tx	    func NewMobileUtxoList() *MobileUtxoList
-mobile/tx	    func NewNearTxBuilder() *NearTxBuilder
-mobile/tx	    func NewSolTxBuilder() *SolTxBuilder
-mobile/tx	    func NewSolTxBuilderFromUnsignedHex(unsignedHex string) (*SolTxBuilder, error)
-mobile/tx	    func NewStellarTxBuilder() *StellarTxBuilder
-mobile/tx	    func NewSubstrateTxBuilder(network string) *SubstrateTxBuilder
-mobile/tx	    func NewSuiTxBuilder() *SuiTxBuilder
-mobile/tx	    func NewSuiTxBuilderFromUnsignedHex(unsignedHex string) (*SuiTxBuilder, error)
-mobile/tx	    func NewTonTxBuilder() *TonTxBuilder
-mobile/tx	    func NewTrxTxBuilder() *TrxTxBuilder
-mobile/tx	    func NewTrxTxBuilderFromUnsignedHex(unsignedHex string, sender string) (*TrxTxBuilder, error)
-mobile/tx	    func NewUtxoTxBuilder(network string) *UtxoTxBuilder
-mobile/tx	    func NewUtxoTxBuilderFromUnsignedHex(unsignedHex string, publicKey string, network string) (*UtxoTxBuilder, error)
 mobile/tx	const MobileMagicAddressForZeroEVM = signing.MagicAddressForZeroEVM ...
 mobile/tx	const MobileTxStatusUnknown = signing.TxStatusUnknown ...
 mobile/tx	const MobileTxTypeTransfer = signing.TxTypeTransfer ...
+mobile/tx	func (b *AlgorandTxBuilder) Build() error
+mobile/tx	func (b *AlgorandTxBuilder) ConcatSignature(signature string) (string, error)
+mobile/tx	func (b *AlgorandTxBuilder) SetAmount(v string) *AlgorandTxBuilder
+mobile/tx	func (b *AlgorandTxBuilder) SetContractAddress(v string) *AlgorandTxBuilder
+mobile/tx	func (b *AlgorandTxBuilder) SetFee(v string) *AlgorandTxBuilder
+mobile/tx	func (b *AlgorandTxBuilder) SetFirstValid(v string) *AlgorandTxBuilder
+mobile/tx	func (b *AlgorandTxBuilder) SetGenesisHash(v string) *AlgorandTxBuilder
+mobile/tx	func (b *AlgorandTxBuilder) SetGenesisID(v string) *AlgorandTxBuilder
+mobile/tx	func (b *AlgorandTxBuilder) SetRecipient(v string) *AlgorandTxBuilder
+mobile/tx	func (b *AlgorandTxBuilder) SetSender(v string) *AlgorandTxBuilder
+mobile/tx	func (b *AlgorandTxBuilder) SetTxType(v string) *AlgorandTxBuilder
+mobile/tx	func (b *AlgorandTxBuilder) SigHash() string
+mobile/tx	func (b *AlgorandTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *AlgorandTxBuilder) TxHash() string
+mobile/tx	func (b *AlgorandTxBuilder) UnsignedHex() string
+mobile/tx	func (b *AptTxBuilder) Build() error
+mobile/tx	func (b *AptTxBuilder) ConcatSignature(signatureHex string) (string, error)
+mobile/tx	func (b *AptTxBuilder) SetAmount(amount string) *AptTxBuilder
+mobile/tx	func (b *AptTxBuilder) SetChainId(chainId string) *AptTxBuilder
+mobile/tx	func (b *AptTxBuilder) SetContractAddress(addr string) *AptTxBuilder
+mobile/tx	func (b *AptTxBuilder) SetExpirationTimestamp(expirationTimestamp string) *AptTxBuilder
+mobile/tx	func (b *AptTxBuilder) SetGasLimit(gasLimitDec string) *AptTxBuilder
+mobile/tx	func (b *AptTxBuilder) SetGasPrice(gasPrice string) *AptTxBuilder
+mobile/tx	func (b *AptTxBuilder) SetNonce(nonceDec string) *AptTxBuilder
+mobile/tx	func (b *AptTxBuilder) SetRecipient(addr string) *AptTxBuilder
+mobile/tx	func (b *AptTxBuilder) SetSender(addr string) *AptTxBuilder
+mobile/tx	func (b *AptTxBuilder) SetSenderPubKey(pubKey string) *AptTxBuilder
+mobile/tx	func (b *AptTxBuilder) SetTxType(txType string) *AptTxBuilder
+mobile/tx	func (b *AptTxBuilder) SigHash() string
+mobile/tx	func (b *AptTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *AptTxBuilder) TxHash() string
+mobile/tx	func (b *AptTxBuilder) UnsignedHex() string
+mobile/tx	func (b *CosmosTxBuilder) Build() error
+mobile/tx	func (b *CosmosTxBuilder) ConcatSignature(signatureHex string) (string, error)
+mobile/tx	func (b *CosmosTxBuilder) SetAccountNumber(accountNumber string) *CosmosTxBuilder
+mobile/tx	func (b *CosmosTxBuilder) SetAmount(amount string) *CosmosTxBuilder
+mobile/tx	func (b *CosmosTxBuilder) SetContractAddress(addr string) *CosmosTxBuilder
+mobile/tx	func (b *CosmosTxBuilder) SetFeeAmount(fee string) *CosmosTxBuilder
+mobile/tx	func (b *CosmosTxBuilder) SetGasLimit(gasLimit string) *CosmosTxBuilder
+mobile/tx	func (b *CosmosTxBuilder) SetMemo(memo string) *CosmosTxBuilder
+mobile/tx	func (b *CosmosTxBuilder) SetRecipient(addr string) *CosmosTxBuilder
+mobile/tx	func (b *CosmosTxBuilder) SetSender(addr string) *CosmosTxBuilder
+mobile/tx	func (b *CosmosTxBuilder) SetSenderPublicKey(pubKeyHex string) *CosmosTxBuilder
+mobile/tx	func (b *CosmosTxBuilder) SetSequence(sequence string) *CosmosTxBuilder
+mobile/tx	func (b *CosmosTxBuilder) SetTxType(txType string) *CosmosTxBuilder
+mobile/tx	func (b *CosmosTxBuilder) SigHash() string
+mobile/tx	func (b *CosmosTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *CosmosTxBuilder) TxHash() string
+mobile/tx	func (b *CosmosTxBuilder) UnsignedHex() string
+mobile/tx	func (b *EgldTxBuilder) Build() error
+mobile/tx	func (b *EgldTxBuilder) ConcatSignature(signatureHex string) (string, error)
+mobile/tx	func (b *EgldTxBuilder) SetAmount(amount string) *EgldTxBuilder
+mobile/tx	func (b *EgldTxBuilder) SetChainId(chainId string) *EgldTxBuilder
+mobile/tx	func (b *EgldTxBuilder) SetContractAddress(addr string) *EgldTxBuilder
+mobile/tx	func (b *EgldTxBuilder) SetGasLimit(gasLimit string) *EgldTxBuilder
+mobile/tx	func (b *EgldTxBuilder) SetGasPrice(gasPrice string) *EgldTxBuilder
+mobile/tx	func (b *EgldTxBuilder) SetNonce(nonceDec string) *EgldTxBuilder
+mobile/tx	func (b *EgldTxBuilder) SetRecipient(addr string) *EgldTxBuilder
+mobile/tx	func (b *EgldTxBuilder) SetSender(addr string) *EgldTxBuilder
+mobile/tx	func (b *EgldTxBuilder) SetTxType(txType string) *EgldTxBuilder
+mobile/tx	func (b *EgldTxBuilder) SetVersion(version string) *EgldTxBuilder
+mobile/tx	func (b *EgldTxBuilder) SigHash() string
+mobile/tx	func (b *EgldTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *EgldTxBuilder) TxHash() string
+mobile/tx	func (b *EgldTxBuilder) UnsignedHex() string
+mobile/tx	func (b *EvmTxBuilder) AsEIP1559(gasFeeCapWei, gasTipCapWei string) *EvmTxBuilder
+mobile/tx	func (b *EvmTxBuilder) AsLegacyTx() *EvmTxBuilder
+mobile/tx	func (b *EvmTxBuilder) Build() error
+mobile/tx	func (b *EvmTxBuilder) ConcatSignature(signatureHex string) (string, error)
+mobile/tx	func (b *EvmTxBuilder) SetAmount(amount string) *EvmTxBuilder
+mobile/tx	func (b *EvmTxBuilder) SetContractAddress(addr string) *EvmTxBuilder
+mobile/tx	func (b *EvmTxBuilder) SetGasLimit(gasLimitDec string) *EvmTxBuilder
+mobile/tx	func (b *EvmTxBuilder) SetGasPriceWei(gasPriceDec string) *EvmTxBuilder
+mobile/tx	func (b *EvmTxBuilder) SetMemoHex(hexMemo string) *EvmTxBuilder
+mobile/tx	func (b *EvmTxBuilder) SetNonce(nonceDec string) *EvmTxBuilder
+mobile/tx	func (b *EvmTxBuilder) SetPayloadHex(hexPayload string) *EvmTxBuilder
+mobile/tx	func (b *EvmTxBuilder) SetRecipient(addr string) *EvmTxBuilder
+mobile/tx	func (b *EvmTxBuilder) SetSender(addr string) *EvmTxBuilder
+mobile/tx	func (b *EvmTxBuilder) SetTxType(txType string) *EvmTxBuilder
+mobile/tx	func (b *EvmTxBuilder) SigHash() string
+mobile/tx	func (b *EvmTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *EvmTxBuilder) SignWithSession(handle string) (string, error)
+mobile/tx	func (b *EvmTxBuilder) TxHash() string
+mobile/tx	func (b *EvmTxBuilder) UnsignedHex() string
+mobile/tx	func (b *FilecoinTxBuilder) Build() error
+mobile/tx	func (b *FilecoinTxBuilder) ConcatSignature(signature string) (string, error)
+mobile/tx	func (b *FilecoinTxBuilder) SetAmount(v string) *FilecoinTxBuilder
+mobile/tx	func (b *FilecoinTxBuilder) SetContractAddress(v string) *FilecoinTxBuilder
+mobile/tx	func (b *FilecoinTxBuilder) SetGasFeeCap(v string) *FilecoinTxBuilder
+mobile/tx	func (b *FilecoinTxBuilder) SetGasLimit(v string) *FilecoinTxBuilder
+mobile/tx	func (b *FilecoinTxBuilder) SetGasPremium(v string) *FilecoinTxBuilder
+mobile/tx	func (b *FilecoinTxBuilder) SetNonce(v string) *FilecoinTxBuilder
+mobile/tx	func (b *FilecoinTxBuilder) SetRecipient(v string) *FilecoinTxBuilder
+mobile/tx	func (b *FilecoinTxBuilder) SetSender(v string) *FilecoinTxBuilder
+mobile/tx	func (b *FilecoinTxBuilder) SetTxType(v string) *FilecoinTxBuilder
+mobile/tx	func (b *FilecoinTxBuilder) SigHash() string
+mobile/tx	func (b *FilecoinTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *FilecoinTxBuilder) TxHash() string
+mobile/tx	func (b *FilecoinTxBuilder) UnsignedHex() string
+mobile/tx	func (b *KasTxBuilder) Build() error
+mobile/tx	func (b *KasTxBuilder) ConcatSignature(signatureHex string) (string, error)
+mobile/tx	func (b *KasTxBuilder) SetAmount(amount string) *KasTxBuilder
+mobile/tx	func (b *KasTxBuilder) SetContractAddress(addr string) *KasTxBuilder
+mobile/tx	func (b *KasTxBuilder) SetFee(fee string) *KasTxBuilder
+mobile/tx	func (b *KasTxBuilder) SetKrc20RedeemScript(krc20RedeemScript string) *KasTxBuilder
+mobile/tx	func (b *KasTxBuilder) SetRecipient(addr string) *KasTxBuilder
+mobile/tx	func (b *KasTxBuilder) SetSender(addr string) *KasTxBuilder
+mobile/tx	func (b *KasTxBuilder) SetTxType(txType string) *KasTxBuilder
+mobile/tx	func (b *KasTxBuilder) SetUtxos(utxos *MobileUtxoList) *KasTxBuilder
+mobile/tx	func (b *KasTxBuilder) SigHash() string
+mobile/tx	func (b *KasTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *KasTxBuilder) TxHash() string
+mobile/tx	func (b *KasTxBuilder) UnsignedHex() string
+mobile/tx	func (b *NearTxBuilder) Build() error
+mobile/tx	func (b *NearTxBuilder) ConcatSignature(signature string) (string, error)
+mobile/tx	func (b *NearTxBuilder) SetAmount(amount string) *NearTxBuilder
+mobile/tx	func (b *NearTxBuilder) SetBlockHash(blockHash string) *NearTxBuilder
+mobile/tx	func (b *NearTxBuilder) SetContractAddress(addr string) *NearTxBuilder
+mobile/tx	func (b *NearTxBuilder) SetNonce(nonce string) *NearTxBuilder
+mobile/tx	func (b *NearTxBuilder) SetRecipient(addr string) *NearTxBuilder
+mobile/tx	func (b *NearTxBuilder) SetRequiredAmount(amount string) *NearTxBuilder
+mobile/tx	func (b *NearTxBuilder) SetSender(addr string) *NearTxBuilder
+mobile/tx	func (b *NearTxBuilder) SetSenderPublicKey(pubKeyHex string) *NearTxBuilder
+mobile/tx	func (b *NearTxBuilder) SetTxType(txType string) *NearTxBuilder
+mobile/tx	func (b *NearTxBuilder) SigHash() string
+mobile/tx	func (b *NearTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *NearTxBuilder) TxHash() string
+mobile/tx	func (b *NearTxBuilder) UnsignedHex() string
+mobile/tx	func (b *SolTxBuilder) Build() error
+mobile/tx	func (b *SolTxBuilder) ConcatSignature(signatureHex string) (string, error)
+mobile/tx	func (b *SolTxBuilder) HasATA(has string) *SolTxBuilder
+mobile/tx	func (b *SolTxBuilder) SetAmount(amount string) *SolTxBuilder
+mobile/tx	func (b *SolTxBuilder) SetContractAddress(addr string) *SolTxBuilder
+mobile/tx	func (b *SolTxBuilder) SetDecimals(decimals string) *SolTxBuilder
+mobile/tx	func (b *SolTxBuilder) SetFee(fee string) *SolTxBuilder
+mobile/tx	func (b *SolTxBuilder) SetRecipient(addr string) *SolTxBuilder
+mobile/tx	func (b *SolTxBuilder) SetRefBlockHash(hash string) *SolTxBuilder
+mobile/tx	func (b *SolTxBuilder) SetSender(addr string) *SolTxBuilder
+mobile/tx	func (b *SolTxBuilder) SetToken2022(is string) *SolTxBuilder
+mobile/tx	func (b *SolTxBuilder) SetTxType(txType string) *SolTxBuilder
+mobile/tx	func (b *SolTxBuilder) SigHash() string
+mobile/tx	func (b *SolTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *SolTxBuilder) SignWithSession(handle string) (string, error)
+mobile/tx	func (b *SolTxBuilder) TxHash() string
+mobile/tx	func (b *SolTxBuilder) UnsignedHex() string
+mobile/tx	func (b *StellarTxBuilder) Build() error
+mobile/tx	func (b *StellarTxBuilder) ConcatSignature(signature string) (string, error)
+mobile/tx	func (b *StellarTxBuilder) SetAmount(amount string) *StellarTxBuilder
+mobile/tx	func (b *StellarTxBuilder) SetContractAddress(addr string) *StellarTxBuilder
+mobile/tx	func (b *StellarTxBuilder) SetIsRecipientActivated(activated string) *StellarTxBuilder
+mobile/tx	func (b *StellarTxBuilder) SetMemo(memo string) *StellarTxBuilder
+mobile/tx	func (b *StellarTxBuilder) SetRecipient(addr string) *StellarTxBuilder
+mobile/tx	func (b *StellarTxBuilder) SetSender(addr string) *StellarTxBuilder
+mobile/tx	func (b *StellarTxBuilder) SetSequence(sequence string) *StellarTxBuilder
+mobile/tx	func (b *StellarTxBuilder) SetTxType(txType string) *StellarTxBuilder
+mobile/tx	func (b *StellarTxBuilder) SigHash() string
+mobile/tx	func (b *StellarTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *StellarTxBuilder) TxHash() string
+mobile/tx	func (b *StellarTxBuilder) UnsignedHex() string
+mobile/tx	func (b *SubstrateTxBuilder) Build() error
+mobile/tx	func (b *SubstrateTxBuilder) ConcatSignature(signatureHex string) (string, error)
+mobile/tx	func (b *SubstrateTxBuilder) SetAmount(amount string) *SubstrateTxBuilder
+mobile/tx	func (b *SubstrateTxBuilder) SetChainInfo(chainInfoJSON string) *SubstrateTxBuilder
+mobile/tx	func (b *SubstrateTxBuilder) SetContractAddress(addr string) *SubstrateTxBuilder
+mobile/tx	func (b *SubstrateTxBuilder) SetFee(fee string) *SubstrateTxBuilder
+mobile/tx	func (b *SubstrateTxBuilder) SetNonce(nonce string) *SubstrateTxBuilder
+mobile/tx	func (b *SubstrateTxBuilder) SetRecipient(addr string) *SubstrateTxBuilder
+mobile/tx	func (b *SubstrateTxBuilder) SetSender(addr string) *SubstrateTxBuilder
+mobile/tx	func (b *SubstrateTxBuilder) SetTxType(txType string) *SubstrateTxBuilder
+mobile/tx	func (b *SubstrateTxBuilder) SigHash() string
+mobile/tx	func (b *SubstrateTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *SubstrateTxBuilder) TxHash() string
+mobile/tx	func (b *SubstrateTxBuilder) UnsignedHex() string
+mobile/tx	func (b *SuiTxBuilder) Build() error
+mobile/tx	func (b *SuiTxBuilder) ConcatSignature(signatureHex string) (string, error)
+mobile/tx	func (b *SuiTxBuilder) SetAmount(amount string) *SuiTxBuilder
+mobile/tx	func (b *SuiTxBuilder) SetCoins(coinsStr string) *SuiTxBuilder
+mobile/tx	func (b *SuiTxBuilder) SetContractAddress(addr string) *SuiTxBuilder
+mobile/tx	func (b *SuiTxBuilder) SetGasBudget(gasBudget string) *SuiTxBuilder
+mobile/tx	func (b *SuiTxBuilder) SetGasCoins(gasCoinsStr string) *SuiTxBuilder
+mobile/tx	func (b *SuiTxBuilder) SetGasPrice(gasPrice string) *SuiTxBuilder
+mobile/tx	func (b *SuiTxBuilder) SetRecipient(addr string) *SuiTxBuilder
+mobile/tx	func (b *SuiTxBuilder) SetSender(addr string) *SuiTxBuilder
+mobile/tx	func (b *SuiTxBuilder) SetTxType(txType string) *SuiTxBuilder
+mobile/tx	func (b *SuiTxBuilder) SigHash() string
+mobile/tx	func (b *SuiTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *SuiTxBuilder) TxHash() string
+mobile/tx	func (b *SuiTxBuilder) UnsignedHex() string
+mobile/tx	func (b *TonTxBuilder) Build() error
+mobile/tx	func (b *TonTxBuilder) ConcatSignature(signatureHex string) (string, error)
+mobile/tx	func (b *TonTxBuilder) SetAmount(amount string) *TonTxBuilder
+mobile/tx	func (b *TonTxBuilder) SetContractAddress(addr string) *TonTxBuilder
+mobile/tx	func (b *TonTxBuilder) SetFee(fee string) *TonTxBuilder
+mobile/tx	func (b *TonTxBuilder) SetJettonWallet(addr string) *TonTxBuilder
+mobile/tx	func (b *TonTxBuilder) SetMemo(memo string) *TonTxBuilder
+mobile/tx	func (b *TonTxBuilder) SetNonce(nonce string) *TonTxBuilder
+mobile/tx	func (b *TonTxBuilder) SetRecipient(addr string) *TonTxBuilder
+mobile/tx	func (b *TonTxBuilder) SetSender(addr string) *TonTxBuilder
+mobile/tx	func (b *TonTxBuilder) SetSenderPublicKey(pubKeyHex string) *TonTxBuilder
+mobile/tx	func (b *TonTxBuilder) SetTxType(txType string) *TonTxBuilder
+mobile/tx	func (b *TonTxBuilder) SigHash() string
+mobile/tx	func (b *TonTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *TonTxBuilder) TxHash() string
+mobile/tx	func (b *TonTxBuilder) UnsignedHex() string
+mobile/tx	func (b *TrxTxBuilder) Build() error
+mobile/tx	func (b *TrxTxBuilder) ConcatSignature(signatureHex string) (string, error)
+mobile/tx	func (b *TrxTxBuilder) SetAmount(amount string) *TrxTxBuilder
+mobile/tx	func (b *TrxTxBuilder) SetContractAddress(addr string) *TrxTxBuilder
+mobile/tx	func (b *TrxTxBuilder) SetFeeLimit(fee string) *TrxTxBuilder
+mobile/tx	func (b *TrxTxBuilder) SetPayloadHex(payload string) *TrxTxBuilder
+mobile/tx	func (b *TrxTxBuilder) SetRecipient(addr string) *TrxTxBuilder
+mobile/tx	func (b *TrxTxBuilder) SetRefBlockHash(blockHash string) *TrxTxBuilder
+mobile/tx	func (b *TrxTxBuilder) SetRefBlockNumber(blockNumber string) *TrxTxBuilder
+mobile/tx	func (b *TrxTxBuilder) SetRefBlockTime(blockTime string) *TrxTxBuilder
+mobile/tx	func (b *TrxTxBuilder) SetSender(addr string) *TrxTxBuilder
+mobile/tx	func (b *TrxTxBuilder) SetTxType(txType string) *TrxTxBuilder
+mobile/tx	func (b *TrxTxBuilder) SigHash() string
+mobile/tx	func (b *TrxTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *TrxTxBuilder) SignWithSession(handle string) (string, error)
+mobile/tx	func (b *TrxTxBuilder) TxHash() string
+mobile/tx	func (b *TrxTxBuilder) UnsignedHex() string
+mobile/tx	func (b *UtxoTxBuilder) Build() error
+mobile/tx	func (b *UtxoTxBuilder) ConcatSignature(signatureHex string) (string, error)
+mobile/tx	func (b *UtxoTxBuilder) SetAmount(amount string) *UtxoTxBuilder
+mobile/tx	func (b *UtxoTxBuilder) SetByteFee(feeRate string) *UtxoTxBuilder
+mobile/tx	func (b *UtxoTxBuilder) SetContractAddress(addr string) *UtxoTxBuilder
+mobile/tx	func (b *UtxoTxBuilder) SetRecipient(addr string) *UtxoTxBuilder
+mobile/tx	func (b *UtxoTxBuilder) SetSender(addr string) *UtxoTxBuilder
+mobile/tx	func (b *UtxoTxBuilder) SetSenderPublicKey(pubKey string) *UtxoTxBuilder
+mobile/tx	func (b *UtxoTxBuilder) SetTxType(txType string) *UtxoTxBuilder
+mobile/tx	func (b *UtxoTxBuilder) SetUtxos(utxos *MobileUtxoList) *UtxoTxBuilder
+mobile/tx	func (b *UtxoTxBuilder) SigHash() string
+mobile/tx	func (b *UtxoTxBuilder) Sign(privateKey []byte) (string, error)
+mobile/tx	func (b *UtxoTxBuilder) TxHash() string
+mobile/tx	func (b *UtxoTxBuilder) UnsignedHex() string
+mobile/tx	func (m *MobileUtxoList) AddUtxoInfo(info *MobileUtxoInfo)
+mobile/tx	func (m *MobileUtxoList) CalcValue() string
+mobile/tx	func (m *MobileUtxoList) SelectUtxo(targetValue string) error
+mobile/tx	func (m *MobileUtxoList) SerializeFromStr(jsonStr string) error
+mobile/tx	func (m *MobileUtxoList) String() string
+mobile/tx	func (s *EvmMessageSigner) Digest() string
+mobile/tx	func (s *EvmMessageSigner) SetBytes(message []byte) *EvmMessageSigner
+mobile/tx	func (s *EvmMessageSigner) SetHex(hexMessage string) *EvmMessageSigner
+mobile/tx	func (s *EvmMessageSigner) SetUtf8(text string) *EvmMessageSigner
+mobile/tx	func (s *EvmMessageSigner) Sign(privateKey []byte) (string, error)
+mobile/tx	func (s *EvmMessageSigner) SignWithSession(handle string) (string, error)
+mobile/tx	func (s *EvmMessageSigner) SignWithSessionExpecting(handle, expectedDigest string) (string, error)
+mobile/tx	func (s *EvmTypedDataSigner) Digest() string
+mobile/tx	func (s *EvmTypedDataSigner) Sign(privateKey []byte, expectedSigner string) (string, error)
+mobile/tx	func (s *EvmTypedDataSigner) SignWithSession(handle string) (string, error)
+mobile/tx	func (s *EvmTypedDataSigner) SignWithSessionExpecting(handle, expectedDigest string) (string, error)
 mobile/tx	func GenerateKrc20Params(in *MobileKrc20Params, pubKey []byte) (string, error)
+mobile/tx	func NewAlgorandTxBuilder() *AlgorandTxBuilder
+mobile/tx	func NewAptTxBuilder() *AptTxBuilder
+mobile/tx	func NewCosmosTxBuilder(network string) *CosmosTxBuilder
+mobile/tx	func NewEgldTxBuilder() *EgldTxBuilder
+mobile/tx	func NewEvmMessageSigner() *EvmMessageSigner
+mobile/tx	func NewEvmTxBuilder(network string) *EvmTxBuilder
+mobile/tx	func NewEvmTypedDataSigner(typedDataJSON string) *EvmTypedDataSigner
+mobile/tx	func NewFilecoinTxBuilder() *FilecoinTxBuilder
+mobile/tx	func NewKasTxBuilder() *KasTxBuilder
+mobile/tx	func NewMobileUtxoList() *MobileUtxoList
+mobile/tx	func NewNearTxBuilder() *NearTxBuilder
+mobile/tx	func NewSolTxBuilder() *SolTxBuilder
+mobile/tx	func NewSolTxBuilderFromUnsignedHex(unsignedHex string) (*SolTxBuilder, error)
+mobile/tx	func NewStellarTxBuilder() *StellarTxBuilder
+mobile/tx	func NewSubstrateTxBuilder(network string) *SubstrateTxBuilder
+mobile/tx	func NewSuiTxBuilder() *SuiTxBuilder
+mobile/tx	func NewSuiTxBuilderFromUnsignedHex(unsignedHex string) (*SuiTxBuilder, error)
+mobile/tx	func NewTonTxBuilder() *TonTxBuilder
+mobile/tx	func NewTrxTxBuilder() *TrxTxBuilder
+mobile/tx	func NewTrxTxBuilderFromUnsignedHex(unsignedHex string, sender string) (*TrxTxBuilder, error)
+mobile/tx	func NewUtxoTxBuilder(network string) *UtxoTxBuilder
+mobile/tx	func NewUtxoTxBuilderFromUnsignedHex(unsignedHex string, publicKey string, network string) (*UtxoTxBuilder, error)
 mobile/tx	func WipeByte(b []byte)
 mobile/tx	type AlgorandTxBuilder struct{ ... }
 mobile/tx	type AptTxBuilder struct{ ... }
 mobile/tx	type CosmosTxBuilder struct{ ... }
 mobile/tx	type EgldTxBuilder struct{ ... }
+mobile/tx	type EvmMessageSigner struct{ ... }
 mobile/tx	type EvmTxBuilder struct{ ... }
+mobile/tx	type EvmTypedDataSigner struct{ ... }
 mobile/tx	type FilecoinTxBuilder struct{ ... }
 mobile/tx	type KasTxBuilder struct{ ... }
 mobile/tx	type MobileKrc20Params kaspa.Krc20Params
@@ -94,6 +414,12 @@ mobile/util	func AesCbcDecrypt(data, key, iv []byte) ([]byte, error)
 mobile/util	func AesCbcEncrypt(data, key, iv []byte) ([]byte, error)
 mobile/util	func AesGcmOpen(data, key, aad []byte) ([]byte, error)
 mobile/util	func AesGcmSeal(data, key, aad []byte) ([]byte, error)
+mobile/util	func SessionInfo(handle string) string
+mobile/util	func SessionLock(handle string)
+mobile/util	func SessionLockAll()
+mobile/util	func SessionTouch(handle string) bool
+mobile/util	func SessionUnlock(keystoreJSON string, password []byte, expectedEvmAddress string, accountIndex, ttlSeconds, idleSeconds int) (string, error)
+mobile/util	func SessionUnlockMnemonic(mnemonic []byte, expectedEvmAddress string, accountIndex, ttlSeconds, idleSeconds int) (string, error)
 mobile/util	func Sha256Hash(data string) string
 mobile/util	func SignEcdsaEvm(privateKey []byte, hash string) (string, error)
 mobile/util	func SssEncryptJWE(publicKeyPEM, shares string) (string, error)
