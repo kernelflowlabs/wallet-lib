@@ -61,7 +61,7 @@ func NewTxBuilderFromUnsignedHex(unsignedHex, sender string) (*TxBuilder, error)
 	if tx.ID != hex.EncodeToString(digest[:]) {
 		return nil, invalid
 	}
-	return &TxBuilder{unsignedHex: unsignedHex, sigHash: []string{tx.ID}}, nil
+	return &TxBuilder{Ingredient: &Ingredient{Sender: sender}, unsignedHex: unsignedHex, sigHash: []string{tx.ID}}, nil
 }
 
 func (tx *TxBuilder) Build() error {
@@ -207,6 +207,16 @@ func (tx *TxBuilder) Sign(privateKey []byte) (string, error) {
 		return "", fmt.Errorf("tx == nil")
 	} else if len(tx.sigHash) != 1 {
 		return "", fmt.Errorf("tx.SigHash == nil")
+	}
+	if tx.Ingredient != nil && tx.Ingredient.Sender != "" {
+		pub, err := key.PrivateKey2PublicKeyECDSA(privateKey)
+		if err != nil {
+			return "", fmt.Errorf("failed to derive public key, err=%v", err)
+		}
+		signer := PublicKey2Address(pub)
+		if signer != tx.Ingredient.Sender {
+			return "", fmt.Errorf("private key does not match sender %s", tx.Ingredient.Sender)
+		}
 	}
 	sigHash, err := hex.DecodeString(tx.sigHash[0])
 	if err != nil {

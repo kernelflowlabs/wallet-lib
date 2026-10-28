@@ -237,6 +237,19 @@ func (tx *TxBuilder) Sign(privateKey []byte) (string, error) {
 	} else if len(tx.sigHash) != 1 {
 		return "", fmt.Errorf("tx.SigHash == nil")
 	}
+	if tx.Ingredient != nil && tx.Ingredient.Sender != "" {
+		pub, err := key.PrivateKey2PublicKeyED25519(privateKey)
+		if err != nil {
+			return "", fmt.Errorf("failed to derive public key, err=%v", err)
+		}
+		signer, err := PublicKey2Address(pub)
+		if err != nil {
+			return "", fmt.Errorf("failed to derive signer address, err=%v", err)
+		}
+		if signer != tx.Ingredient.Sender {
+			return "", fmt.Errorf("private key does not match sender %s", tx.Ingredient.Sender)
+		}
+	}
 	sigHash, err := hex.DecodeString(tx.sigHash[0])
 	if err != nil {
 		return "", fmt.Errorf("failed to DecodeString for sigHash, err=%v", err)
