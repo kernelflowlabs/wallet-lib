@@ -105,7 +105,7 @@ func (b *CosmosTxBuilder) SignWithSession(handle string) (string, error) {
 		return "", fmt.Errorf("invalid_input: no session chain for cosmos network %q", b.network)
 	}
 	var signature string
-	err := session.WithKey(handle, chain, func(privateKey []byte, _ string) error {
+	err := session.WithKeyFor(handle, chain, b.in.Ingredient.Sender, func(privateKey []byte, _ string) error {
 		var signErr error
 		signature, signErr = b.in.Sign(privateKey)
 		return signErr

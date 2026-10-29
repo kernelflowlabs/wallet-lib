@@ -13,7 +13,7 @@ import (
 type Chain struct {
 	Name    string
 	Path    func(accountIndex int) string
-	Derive  func(mnemonic, path string) ([]byte, error)
+	Derive  func(mnemonic []byte, path string) ([]byte, error)
 	Address func(privateKey []byte) (string, error)
 
 	// CaseInsensitiveAddress says whether two spellings that differ only in

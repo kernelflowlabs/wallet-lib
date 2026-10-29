@@ -91,7 +91,7 @@ func (b *TonTxBuilder) UnsignedHex() string {
 
 func (b *TonTxBuilder) SignWithSession(handle string) (string, error) {
 	var signature string
-	err := session.WithKey(handle, ton.SessionChain, func(privateKey []byte, _ string) error {
+	err := session.WithKeyFor(handle, ton.SessionChain, b.in.Ingredient.Sender, func(privateKey []byte, _ string) error {
 		var signErr error
 		signature, signErr = b.in.Sign(privateKey)
 		return signErr

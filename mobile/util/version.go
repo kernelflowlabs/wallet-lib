@@ -14,7 +14,9 @@ package util
 //	1  pre-session surface (through wallet-sdk v0.0.7)
 //	2  signing sessions, EIP-191 and EIP-712 signers, WalletConnect describers,
 //	   and SignTypedDataJSON gaining its expectedSigner argument
-const bindingRevision = 2
+//	3  byte-slice mnemonic entry points, chain-bound session signing, and the
+//	   Solana dApp signers gaining their expectedHash argument
+const bindingRevision = 3
 
 func BindingRevision() int {
 	return bindingRevision

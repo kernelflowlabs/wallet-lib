@@ -27,14 +27,14 @@ func WriteToKeyStoreBytes(name string, text, password []byte, isMn bool) (string
 	coin := 0
 	type1 := "any"
 	if isMn {
-		if !IsValidMnemonic(string(text)) {
+		if !bip.IsMnemonicValidBytes(text) {
 			return "", fmt.Errorf("invalid mnemonic")
 		}
 		coin = 60
 		type1 = "mnemonic"
 		path = "m/44'/60'/0'/0/0"
 		{
-			seed, err := bip.NewSeedWithErrorChecking(string(text), "")
+			seed, err := bip.NewSeedWithErrorCheckingBytes(text, nil)
 			if err != nil {
 				return "", fmt.Errorf("failed to NewSeedWithErrorChecking, err=%v", err)
 			}

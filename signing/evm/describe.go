@@ -26,13 +26,14 @@ const (
 )
 
 const (
-	WarnContractCreation   = "contract_creation"
-	WarnValueWithCall      = "value_with_call"
-	WarnOperatorFullAccess = "operator_full_control"
-	WarnUnlimitedApproval  = "unlimited_approval"
-	WarnZeroAddress        = "zero_address"
-	WarnErc20OrErc721      = "erc20_or_erc721"
-	WarnUnknownSelector    = "unknown_selector"
+	WarnContractCreation     = "contract_creation"
+	WarnValueWithCall        = "value_with_call"
+	WarnOperatorFullAccess   = "operator_full_control"
+	WarnUnlimitedApproval    = "unlimited_approval"
+	WarnZeroAddress          = "zero_address"
+	WarnErc20OrErc721        = "erc20_or_erc721"
+	WarnApprovalIsNftTokenID = "approval_amount_may_be_nft_token_id"
+	WarnUnknownSelector      = "unknown_selector"
 )
 
 type EvmCallRequest struct {
@@ -176,6 +177,7 @@ func decodeEvmCalldata(out *EvmCallDescription, data []byte) {
 		out.Amount = amount.String()
 		out.TokenID = out.Amount
 		out.Warnings = append(out.Warnings, WarnErc20OrErc721)
+		out.Warnings = append(out.Warnings, WarnApprovalIsNftTokenID)
 		if amount.Sign() == 0 {
 			out.Revoke = true
 		} else if amount.Cmp(unlimitedFloor) >= 0 {

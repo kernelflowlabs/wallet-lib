@@ -3,6 +3,8 @@
 package acc
 
 import (
+	"github.com/kernelflowlabs/wallet-lib/crypto"
+	"github.com/kernelflowlabs/wallet-lib/crypto/key"
 	"github.com/kernelflowlabs/wallet-lib/signing"
 	"github.com/kernelflowlabs/wallet-lib/signing/tron"
 )
@@ -13,6 +15,19 @@ type TrxAccount struct {
 
 func NewTrxFromMnemonic(mnemonic, path string) (*TrxAccount, error) {
 	acc, err := tron.NewAccountFromMnemonic(mnemonic, path)
+	if err != nil {
+		return nil, err
+	}
+	return &TrxAccount{in: acc.(*tron.Account)}, nil
+}
+
+func NewTrxFromMnemonicBytes(mnemonic []byte, path string) (*TrxAccount, error) {
+	priv, err := key.DerivePrivateKeyECDSABytes(mnemonic, path)
+	if err != nil {
+		return nil, err
+	}
+	defer crypto.Wipe(priv)
+	acc, err := tron.NewAccountFromPrivateKey(priv)
 	if err != nil {
 		return nil, err
 	}

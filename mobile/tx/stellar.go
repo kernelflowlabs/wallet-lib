@@ -81,7 +81,7 @@ func (b *StellarTxBuilder) UnsignedHex() string {
 
 func (b *StellarTxBuilder) SignWithSession(handle string) (string, error) {
 	var signature string
-	err := session.WithKey(handle, stellar.SessionChain, func(privateKey []byte, _ string) error {
+	err := session.WithKeyFor(handle, stellar.SessionChain, b.in.Ingredient.Sender, func(privateKey []byte, _ string) error {
 		var signErr error
 		signature, signErr = b.in.Sign(privateKey)
 		return signErr

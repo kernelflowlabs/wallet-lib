@@ -1,6 +1,7 @@
 package solana
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"strconv"
@@ -83,6 +84,15 @@ func DescribeSolTransaction(txBytes []byte, ownerAddress string) string {
 	tx, err := SafeTransactionDeserialize(txBytes)
 	if err != nil {
 		out.DecodeError = err.Error()
+		return marshalSolDescription(out)
+	}
+	roundTrip, err := tx.Serialize()
+	if err != nil {
+		out.DecodeError = err.Error()
+		return marshalSolDescription(out)
+	}
+	if !bytes.Equal(roundTrip, txBytes) {
+		out.DecodeError = "transaction does not survive a serialization round trip; refusing to describe a re-encoding"
 		return marshalSolDescription(out)
 	}
 	message := tx.Message

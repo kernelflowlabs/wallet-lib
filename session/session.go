@@ -57,8 +57,9 @@ func (o Options) normalize() (time.Duration, time.Duration, error) {
 }
 
 type Addresses struct {
-	Addresses map[string]string
-	ExpiresAt time.Time
+	Addresses   map[string]string
+	Unavailable map[string]string
+	ExpiresAt   time.Time
 }
 
 type entry struct {
@@ -187,7 +188,7 @@ func newSessionAt(generation uint64, mnemonic []byte, expectChain, expectAddress
 		}
 	}
 	for _, c := range registered {
-		priv, err := c.Derive(string(mnemonic), c.Path(accountIndex))
+		priv, err := c.Derive(mnemonic, c.Path(accountIndex))
 		if err != nil {
 			unavailable[c.Name] = "key derivation failed"
 			continue
@@ -332,7 +333,11 @@ func Info(handle string) (*Addresses, error) {
 	for name, address := range e.addresses {
 		out[name] = address
 	}
-	return &Addresses{Addresses: out, ExpiresAt: e.expiresAt}, nil
+	down := make(map[string]string, len(e.unavailable))
+	for name, reason := range e.unavailable {
+		down[name] = reason
+	}
+	return &Addresses{Addresses: out, Unavailable: down, ExpiresAt: e.expiresAt}, nil
 }
 
 func Touch(handle string) bool {
@@ -375,4 +380,21 @@ func Address(handle, chain string) (string, error) {
 		return nil
 	})
 	return address, err
+}
+
+func WithKeyFor(handle, chain, expectAddress string, fn func(privateKey []byte, address string) error) error {
+	expected := strings.TrimSpace(expectAddress)
+	if expected == "" {
+		return WithKey(handle, chain, fn)
+	}
+	c, ok := chainByName(chain)
+	if !ok {
+		return fmt.Errorf("%w: chain %q is not registered in this build", ErrInvalidInput, chain)
+	}
+	return WithKey(handle, chain, func(privateKey []byte, address string) error {
+		if !addressesMatch(address, expected, c.CaseInsensitiveAddress) {
+			return fmt.Errorf("%w: session key does not match sender %s", ErrAddressMismatch, expected)
+		}
+		return fn(privateKey, address)
+	})
 }

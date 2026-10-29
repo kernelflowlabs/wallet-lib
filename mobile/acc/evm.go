@@ -4,6 +4,8 @@ package acc
 
 import (
 	"encoding/hex"
+	"github.com/kernelflowlabs/wallet-lib/crypto"
+	"github.com/kernelflowlabs/wallet-lib/crypto/key"
 
 	"github.com/kernelflowlabs/wallet-lib/signing"
 	"github.com/kernelflowlabs/wallet-lib/signing/evm"
@@ -15,6 +17,19 @@ type EvmAccount struct {
 
 func NewEvmFromMnemonic(mnemonic, path string) (*EvmAccount, error) {
 	acc, err := evm.NewAccountFromMnemonic(mnemonic, path)
+	if err != nil {
+		return nil, err
+	}
+	return &EvmAccount{in: acc.(*evm.Account)}, nil
+}
+
+func NewEvmFromMnemonicBytes(mnemonic []byte, path string) (*EvmAccount, error) {
+	priv, err := key.DerivePrivateKeyECDSABytes(mnemonic, path)
+	if err != nil {
+		return nil, err
+	}
+	defer crypto.Wipe(priv)
+	acc, err := evm.NewAccountFromPrivateKey(priv)
 	if err != nil {
 		return nil, err
 	}

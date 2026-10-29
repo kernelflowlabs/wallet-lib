@@ -3,6 +3,8 @@
 package acc
 
 import (
+	"github.com/kernelflowlabs/wallet-lib/crypto"
+	"github.com/kernelflowlabs/wallet-lib/crypto/key"
 	"github.com/kernelflowlabs/wallet-lib/signing"
 	"github.com/kernelflowlabs/wallet-lib/signing/solana"
 )
@@ -13,6 +15,19 @@ type SolAccount struct {
 
 func NewSolFromMnemonic(mnemonic, path string) (*SolAccount, error) {
 	acc, err := solana.NewAccountFromMnemonic(mnemonic, path)
+	if err != nil {
+		return nil, err
+	}
+	return &SolAccount{in: acc.(*solana.Account)}, nil
+}
+
+func NewSolFromMnemonicBytes(mnemonic []byte, path string) (*SolAccount, error) {
+	priv, err := key.DerivePrivateKeyED25519Bytes(mnemonic, path)
+	if err != nil {
+		return nil, err
+	}
+	defer crypto.Wipe(priv)
+	acc, err := solana.NewAccountFromPrivateKey(priv)
 	if err != nil {
 		return nil, err
 	}

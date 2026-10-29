@@ -73,7 +73,9 @@ func ValidateTransactionEnvelope(data []byte) error {
 	if err != nil {
 		return err
 	}
-	_ = end
+	if end != len(data) {
+		return fmt.Errorf("transaction has %d trailing bytes after its message", len(data)-end)
+	}
 	if uint64(header) != signatures {
 		return fmt.Errorf("transaction declares %d signatures but its message requires %d", signatures, header)
 	}

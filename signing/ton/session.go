@@ -20,15 +20,9 @@ func DerivationPath(accountIndex int) string {
 
 func init() {
 	err := session.RegisterChain(session.Chain{
-		Name: SessionChain,
-		Path: DerivationPath,
-		Derive: func(mnemonic, path string) ([]byte, error) {
-			account, err := NewAccountFromMnemonic(mnemonic, path)
-			if err != nil {
-				return nil, err
-			}
-			return account.PrivateKey(), nil
-		},
+		Name:   SessionChain,
+		Path:   DerivationPath,
+		Derive: DerivePrivateKeyBytes,
 		Address: func(privateKey []byte) (string, error) {
 			account, err := NewAccountFromPrivateKey(privateKey)
 			if err != nil {

@@ -102,7 +102,7 @@ func (b *EgldTxBuilder) UnsignedHex() string {
 
 func (b *EgldTxBuilder) SignWithSession(handle string) (string, error) {
 	var signature string
-	err := session.WithKey(handle, multiversx.SessionChain, func(privateKey []byte, _ string) error {
+	err := session.WithKeyFor(handle, multiversx.SessionChain, b.in.Ingredient.Sender, func(privateKey []byte, _ string) error {
 		var signErr error
 		signature, signErr = b.in.Sign(privateKey)
 		return signErr

@@ -18,6 +18,14 @@ func WriteToKeyStore(name, text, password string, isMn bool) (string, error) {
 	return crypto.WriteToKeyStore(name, text, password, isMn)
 }
 
+func WriteToKeyStoreBytes(name string, text, password []byte, isMn bool) (string, error) {
+	return crypto.WriteToKeyStoreBytes(name, text, password, isMn)
+}
+
+func ReadFromKeyStoreBytes(ksString string, password []byte, isMn bool) ([]byte, error) {
+	return crypto.ReadFromKeyStoreBytes(ksString, password, isMn)
+}
+
 func ReadFromKeyStore(ksString, password string, isMn bool) (string, error) {
 	return crypto.ReadFromKeyStore(ksString, password, isMn)
 }

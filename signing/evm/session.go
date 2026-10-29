@@ -21,7 +21,7 @@ func init() {
 		Name:                   SessionChain,
 		CaseInsensitiveAddress: true,
 		Path:                   DerivationPath,
-		Derive:                 key.DerivePrivateKeyECDSA,
+		Derive:                 key.DerivePrivateKeyECDSABytes,
 		Address: func(privateKey []byte) (string, error) {
 			account, err := NewAccountFromPrivateKey(privateKey)
 			if err != nil {

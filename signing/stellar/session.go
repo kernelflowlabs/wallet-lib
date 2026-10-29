@@ -20,7 +20,7 @@ func init() {
 	err := session.RegisterChain(session.Chain{
 		Name:   SessionChain,
 		Path:   DerivationPath,
-		Derive: key.DerivePrivateKeyED25519,
+		Derive: key.DerivePrivateKeyED25519Bytes,
 		Address: func(privateKey []byte) (string, error) {
 			account, err := NewAccountFromPrivateKey(privateKey)
 			if err != nil {

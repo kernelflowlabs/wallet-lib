@@ -71,23 +71,28 @@ mobile/acc	func NewAptFromMnemonic(mnemonic, path string) (*AptAccount, error)
 mobile/acc	func NewCosmosFromMnemonic(mnemonic, path, network string) (*CosmosAccount, error)
 mobile/acc	func NewEgldFromMnemonic(mnemonic, path string) (*EgldAccount, error)
 mobile/acc	func NewEvmFromMnemonic(mnemonic, path string) (*EvmAccount, error)
+mobile/acc	func NewEvmFromMnemonicBytes(mnemonic []byte, path string) (*EvmAccount, error)
 mobile/acc	func NewFilecoinFromMnemonic(mnemonic, path string) (*FilecoinAccount, error)
 mobile/acc	func NewKasFromMnemonic(mnemonic, path string) (*KasAccount, error)
 mobile/acc	func NewNearFromMnemonic(mnemonic, path string) (*NearAccount, error)
 mobile/acc	func NewSolFromMnemonic(mnemonic, path string) (*SolAccount, error)
+mobile/acc	func NewSolFromMnemonicBytes(mnemonic []byte, path string) (*SolAccount, error)
 mobile/acc	func NewStellarFromMnemonic(mnemonic, path string) (*StellarAccount, error)
 mobile/acc	func NewSubstrateFromMnemonic(mnemonic, path, network string) (*SubstrateAccount, error)
 mobile/acc	func NewSubstrateFromMnemonicStandard(mnemonic, path, network string) (*SubstrateAccount, error)
 mobile/acc	func NewSuiFromMnemonic(mnemonic, path string) (*SuiAccount, error)
 mobile/acc	func NewTonFromMnemonic(mnemonic, path string) (*TonAccount, error)
 mobile/acc	func NewTrxFromMnemonic(mnemonic, path string) (*TrxAccount, error)
+mobile/acc	func NewTrxFromMnemonicBytes(mnemonic []byte, path string) (*TrxAccount, error)
 mobile/acc	func NewUtxoFromMnemonic(mnemonic, path, network string) (*UtxoAccount, error)
 mobile/acc	func NewUtxoFromPrivateKeyHex(privateKey, network string) (*UtxoAccount, error)
 mobile/acc	func PrivateKeyHexToWIF(privateKey string) (string, error)
 mobile/acc	func PrivateKeyWIFToHex(privateKey string) (string, error)
 mobile/acc	func ReadFromKeyStore(ksString, password string, isMn bool) (string, error)
+mobile/acc	func ReadFromKeyStoreBytes(ksString string, password []byte, isMn bool) ([]byte, error)
 mobile/acc	func ValidAddress(address string, family int, network string) bool
 mobile/acc	func WriteToKeyStore(name, text, password string, isMn bool) (string, error)
+mobile/acc	func WriteToKeyStoreBytes(name string, text, password []byte, isMn bool) (string, error)
 mobile/acc	type AlgorandAccount struct{ ... }
 mobile/acc	type AptAccount struct{ ... }
 mobile/acc	type CosmosAccount struct{ ... }
@@ -403,8 +408,9 @@ mobile/tx	func NewTrxTxBuilder() *TrxTxBuilder
 mobile/tx	func NewTrxTxBuilderFromUnsignedHex(unsignedHex string, sender string) (*TrxTxBuilder, error)
 mobile/tx	func NewUtxoTxBuilder(network string) *UtxoTxBuilder
 mobile/tx	func NewUtxoTxBuilderFromUnsignedHex(unsignedHex string, publicKey string, network string) (*UtxoTxBuilder, error)
-mobile/tx	func SolSignMessage(handle string, message []byte) (string, error)
-mobile/tx	func SolSignSerializedTransaction(handle string, tx []byte) (string, error)
+mobile/tx	func SolPayloadHash(payload []byte) string
+mobile/tx	func SolSignMessage(handle string, message []byte, expectedHash string) (string, error)
+mobile/tx	func SolSignSerializedTransaction(handle string, tx []byte, expectedHash string) (string, error)
 mobile/tx	func WipeByte(b []byte)
 mobile/tx	type AlgorandTxBuilder struct{ ... }
 mobile/tx	type AptTxBuilder struct{ ... }

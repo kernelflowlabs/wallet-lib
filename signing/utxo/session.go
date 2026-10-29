@@ -49,7 +49,7 @@ func init() {
 			Path: func(accountIndex int) string {
 				return DerivationPath(purpose, coinType, accountIndex)
 			},
-			Derive: key.DerivePrivateKeyECDSA,
+			Derive: key.DerivePrivateKeyECDSABytes,
 			Address: func(privateKey []byte) (string, error) {
 				account, err := NewAccountFromPrivateKey(privateKey, network)
 				if err != nil {

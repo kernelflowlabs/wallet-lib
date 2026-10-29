@@ -109,7 +109,7 @@ func (b *TrxTxBuilder) Sign(privateKey []byte) (string, error) {
 
 func (b *TrxTxBuilder) SignWithSession(handle string) (string, error) {
 	var signature string
-	err := session.WithKey(handle, tron.SessionChain, func(privateKey []byte, _ string) error {
+	err := session.WithKeyFor(handle, tron.SessionChain, b.in.Ingredient.Sender, func(privateKey []byte, _ string) error {
 		var signErr error
 		signature, signErr = b.in.Sign(privateKey)
 		return signErr

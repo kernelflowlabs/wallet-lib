@@ -81,7 +81,7 @@ func (b *KasTxBuilder) UnsignedHex() string {
 
 func (b *KasTxBuilder) SignWithSession(handle string) (string, error) {
 	var signature string
-	err := session.WithKey(handle, kaspa.SessionChain, func(privateKey []byte, _ string) error {
+	err := session.WithKeyFor(handle, kaspa.SessionChain, b.in.Ingredient.Sender, func(privateKey []byte, _ string) error {
 		var signErr error
 		signature, signErr = b.in.Sign(privateKey)
 		return signErr

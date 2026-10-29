@@ -8,9 +8,10 @@ import (
 )
 
 type sessionInfo struct {
-	Locked    bool              `json:"locked,omitempty"`
-	Addresses map[string]string `json:"addresses,omitempty"`
-	ExpiresAt int64             `json:"expiresAt,omitempty"`
+	Locked      bool              `json:"locked,omitempty"`
+	Addresses   map[string]string `json:"addresses,omitempty"`
+	Unavailable map[string]string `json:"unavailable,omitempty"`
+	ExpiresAt   int64             `json:"expiresAt,omitempty"`
 }
 
 // evmChain names the chain whose address the app checks against on unlock.
@@ -24,12 +25,25 @@ func SessionUnlock(keystoreJSON string, password []byte, expectedEvmAddress stri
 }
 
 // SessionUnlockChains opens a session for a chosen set of chains, named as a
-// comma separated list ("evm,sol,trx"). An empty list opens every chain this
+// comma separated list ("evm,solana,tron"). An empty list opens every chain this
 // build registered, which is thirty of them and costs a BIP39 derivation
 // each, so an app that signs on three should name those three.
 func SessionUnlockChains(keystoreJSON string, password []byte, expectedEvmAddress, chains string, accountIndex, ttlSeconds, idleSeconds int) (string, error) {
+	selected := splitChains(chains)
+	if len(selected) > 0 && !containsFold(selected, evmChain) {
+		selected = append(selected, evmChain)
+	}
 	return session.Unlock(keystoreJSON, password, evmChain, expectedEvmAddress, accountIndex,
-		session.Options{TTLSeconds: ttlSeconds, IdleSeconds: idleSeconds, Chains: splitChains(chains)})
+		session.Options{TTLSeconds: ttlSeconds, IdleSeconds: idleSeconds, Chains: selected})
+}
+
+func containsFold(list []string, name string) bool {
+	for _, v := range list {
+		if strings.EqualFold(strings.TrimSpace(v), name) {
+			return true
+		}
+	}
+	return false
 }
 
 func SessionUnlockMnemonic(mnemonic []byte, expectedEvmAddress string, accountIndex, ttlSeconds, idleSeconds int) (string, error) {
@@ -40,11 +54,14 @@ func SessionUnlockMnemonic(mnemonic []byte, expectedEvmAddress string, accountIn
 // chains, named as a comma separated list.
 func SessionUnlockMnemonicChains(mnemonic []byte, expectedEvmAddress, chains string, accountIndex, ttlSeconds, idleSeconds int) (string, error) {
 	chain := evmChain
+	selected := splitChains(chains)
 	if expectedEvmAddress == "" {
 		chain = ""
+	} else if len(selected) > 0 && !containsFold(selected, evmChain) {
+		selected = append(selected, evmChain)
 	}
 	return session.UnlockMnemonic(mnemonic, chain, expectedEvmAddress, accountIndex,
-		session.Options{TTLSeconds: ttlSeconds, IdleSeconds: idleSeconds, Chains: splitChains(chains)})
+		session.Options{TTLSeconds: ttlSeconds, IdleSeconds: idleSeconds, Chains: selected})
 }
 
 // SessionChains lists every chain this build can open a session for, comma
@@ -86,8 +103,9 @@ func SessionInfo(handle string) string {
 		return marshalSessionInfo(&sessionInfo{Locked: true})
 	}
 	return marshalSessionInfo(&sessionInfo{
-		Addresses: info.Addresses,
-		ExpiresAt: info.ExpiresAt.Unix(),
+		Addresses:   info.Addresses,
+		Unavailable: info.Unavailable,
+		ExpiresAt:   info.ExpiresAt.Unix(),
 	})
 }
 

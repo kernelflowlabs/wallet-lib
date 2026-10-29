@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"github.com/kernelflowlabs/wallet-lib/crypto"
 	"github.com/kernelflowlabs/wallet-lib/signing"
 )
 
@@ -66,7 +67,5 @@ func (m *MobileUtxoList) String() string {
 }
 
 func WipeByte(b []byte) {
-	for i := range b {
-		b[i] = 0
-	}
+	crypto.Wipe(b)
 }
