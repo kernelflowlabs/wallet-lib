@@ -355,6 +355,7 @@ var idChainMapper = map[string]string{
 	"169":    "MANTA",
 	"195":    "TRX",
 	"196":    "XLAYER",
+	"4663":   "ROBINHOOD",
 	"250":    "FTM",
 	"324":    "ZKSYNC",
 	"501":    "SOL",

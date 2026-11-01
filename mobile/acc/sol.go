@@ -38,6 +38,10 @@ func (a *SolAccount) PrivateKey() []byte {
 	return a.in.PrivateKey()
 }
 
+func (a *SolAccount) PrivateKeyBase58() (string, error) {
+	return a.in.PrivateKeyBase58()
+}
+
 func (a *SolAccount) PublicKey() []byte {
 	return a.in.PublicKey()
 }

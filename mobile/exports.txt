@@ -38,6 +38,7 @@ mobile/acc	func (a *NearAccount) PublicKeyBase58() string
 mobile/acc	func (a *NearAccount) Wipe()
 mobile/acc	func (a *SolAccount) Address() string
 mobile/acc	func (a *SolAccount) PrivateKey() []byte
+mobile/acc	func (a *SolAccount) PrivateKeyBase58() (string, error)
 mobile/acc	func (a *SolAccount) PublicKey() []byte
 mobile/acc	func (a *SolAccount) Wipe()
 mobile/acc	func (a *StellarAccount) Address() string

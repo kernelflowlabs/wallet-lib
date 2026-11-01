@@ -70,6 +70,16 @@ func ed25519PrivateKey(b []byte) (ed25519.PrivateKey, error) {
 	}
 }
 
+func ED25519FullPrivateKey(privateKey []byte) ([]byte, error) {
+	sk, err := ed25519PrivateKey(privateKey)
+	if err != nil {
+		return nil, err
+	}
+	full := make([]byte, len(sk))
+	copy(full, sk)
+	return full, nil
+}
+
 func VerifySignatureED25519(publicKeyBytes, data, signature []byte) bool {
 	if len(publicKeyBytes) != ed25519.PublicKeySize {
 		return false

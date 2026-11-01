@@ -383,6 +383,7 @@ var idChainMapper = map[string]string{
 	"40":               "TELOS",
 	"167000":           "TAIKO",
 	"196":              "XLAYER",
+	"4663":             "ROBINHOOD",
 	"480":              "WORLDCHAIN",
 	"1135":             "LISK",
 	"1868":             "SONEIUM",

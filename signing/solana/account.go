@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kernelflowlabs/wallet-lib/crypto/key"
 	"github.com/kernelflowlabs/wallet-lib/signing"
+	"github.com/mr-tron/base58"
 	"strings"
 )
 
@@ -59,6 +60,14 @@ func (a *Account) PublicKey() []byte {
 
 func (a *Account) PrivateKeyHex() string {
 	return hex.EncodeToString(a.privateKey)
+}
+
+func (a *Account) PrivateKeyBase58() (string, error) {
+	full, err := key.ED25519FullPrivateKey(a.privateKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to expand ed25519 private key: %v", err)
+	}
+	return base58.Encode(full), nil
 }
 
 func (a *Account) PublicKeyHex() string {
