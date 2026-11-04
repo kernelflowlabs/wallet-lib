@@ -176,27 +176,89 @@ func (h *Handler) CheckTx(ctx context.Context, hash string) (*chainrpc.TxResult,
 	return r, nil
 }
 
-func (h *Handler) GetTxByHashWithLogs(ctx context.Context, hash string) (*GetTransactionWithLog, error) {
-	req := &BaseRequest{
-		JsonRPC: "2.0",
-		ID:      1,
-		Method:  "getTransaction",
-		Params: []interface{}{
-			hash,
-			SearchTransaction{
-				Commitment:                     "finalized",
-				MaxSupportedTransactionVersion: 0,
-			},
-		},
-	}
-	res := &GetTransactionWithLog{}
-	err := h.rpc.Post(ctx, res, "", req)
+func (h *Handler) GetTransfersByHash(ctx context.Context, hash string, confirmation uint64, withInternal bool) (*chainrpc.TxTransfers, error) {
+	result := &chainrpc.TxTransfers{Hash: hash, Transfers: make([]*chainrpc.Transfer, 0)}
+	txResult, err := h.CheckTx(ctx, hash)
 	if err != nil {
-		return nil, fmt.Errorf("failed to _GetTransaction, err=%v", err)
-	} else if res.Error.Code != 0 {
-		return nil, fmt.Errorf("failed to _GetTransaction, err=%s", res.Error.Message)
+		return nil, fmt.Errorf("failed to CheckTx, err=%v", err)
+	} else if txResult.Status == signing.TxStatusFailed {
+		result.Rejected = true
+		result.ErrMsg = txResult.ErrMsg
+		if result.ErrMsg == "" {
+			result.ErrMsg = "not a succeeded tx"
+		}
+		return result, nil
+	} else if txResult.Status == signing.TxStatusPending {
+		result.ErrMsg = "pending tx"
+		return result, nil
+	} else if txResult.Status != signing.TxStatusSucceeded {
+		result.ErrMsg = "not a succeeded tx"
+		return result, nil
 	}
-	return res, nil
+	raw, err := h.InquireChain(ctx, "getTxWithLogsByHash", hash+"_1")
+	if err != nil {
+		return nil, err
+	}
+	var tx GetTransactionWithLog
+	if err := json.Unmarshal([]byte(raw), &tx); err != nil {
+		return nil, err
+	}
+	if tx.Result == nil {
+		return nil, fmt.Errorf("missing transaction result")
+	}
+	meta := tx.Result.Meta
+	keys := append([]string{}, tx.Result.Transaction.Message.AccountKeys...)
+	keys = append(keys, meta.LoadedAddresses.Writable...)
+	keys = append(keys, meta.LoadedAddresses.Readonly...)
+	if len(keys) != len(meta.PreBalances) || len(keys) != len(meta.PostBalances) {
+		return nil, fmt.Errorf("account key count does not match balance count")
+	}
+	for i, key := range keys {
+		change := new(big.Int).Sub(new(big.Int).SetUint64(meta.PostBalances[i]), new(big.Int).SetUint64(meta.PreBalances[i]))
+		if change.Sign() != 0 {
+			result.BalanceChange = append(result.BalanceChange, &chainrpc.BalanceChange{
+				Address: key, ContractAddress: signing.MagicContactAddressForNative, Change: change.String(),
+			})
+		}
+	}
+	balanceMap := make(map[string]map[string]*big.Int)
+	add := func(owner, mint, amount string, post bool) error {
+		value, ok := new(big.Int).SetString(amount, 10)
+		if !ok || value.Sign() < 0 {
+			return fmt.Errorf("invalid token amount %q", amount)
+		}
+		if !post {
+			value.Neg(value)
+		}
+		if balanceMap[owner] == nil {
+			balanceMap[owner] = make(map[string]*big.Int)
+		}
+		if balanceMap[owner][mint] == nil {
+			balanceMap[owner][mint] = new(big.Int)
+		}
+		balanceMap[owner][mint].Add(balanceMap[owner][mint], value)
+		return nil
+	}
+	for _, balance := range meta.PreTokenBalances {
+		if err := add(balance.Owner, balance.Mint, balance.UITokenAmount.Amount, false); err != nil {
+			return nil, err
+		}
+	}
+	for _, balance := range meta.PostTokenBalances {
+		if err := add(balance.Owner, balance.Mint, balance.UITokenAmount.Amount, true); err != nil {
+			return nil, err
+		}
+	}
+	for owner, mints := range balanceMap {
+		for mint, change := range mints {
+			if change.Sign() != 0 {
+				result.BalanceChange = append(result.BalanceChange, &chainrpc.BalanceChange{
+					Address: owner, ContractAddress: mint, Change: change.String(),
+				})
+			}
+		}
+	}
+	return result, nil
 }
 
 func (h *Handler) CallContract(ctx context.Context, contractAddress, params, blockNumber string) ([]byte, error) {
@@ -205,13 +267,57 @@ func (h *Handler) CallContract(ctx context.Context, contractAddress, params, blo
 
 func (h *Handler) InquireChain(ctx context.Context, instruction, params string) (string, error) {
 	switch instruction {
+	case "isTxExisted":
+		txHash := params
+		req := &BaseRequest{
+			JsonRPC: "2.0",
+			ID:      0,
+			Method:  "getSignatureStatuses",
+			Params: []interface{}{
+				[]string{txHash},
+				SearchTransactionHistory{SearchTransactionHistory: true},
+			},
+		}
+		res := &GetSignatureStatusRes{}
+		if err := h.rpc.Post(ctx, res, "", req); err != nil {
+			return "", fmt.Errorf("failed to getSignatureStatuses, err=%v", err)
+		} else if res.Error.Code != 0 {
+			return "", fmt.Errorf("failed to getSignatureStatuses, err=%s", res.Error.Message)
+		}
+		return strconv.FormatBool(len(res.Result.Value) > 0 && res.Result.Value[0] != nil), nil
+	case "simulateTransaction":
+		tx, err := hex.DecodeString(strings.TrimPrefix(params, "0x"))
+		if err != nil {
+			return "", err
+		}
+		req := &BaseRequest{
+			JsonRPC: "2.0",
+			ID:      0,
+			Method:  "simulateTransaction",
+			Params: []interface{}{base64.StdEncoding.EncodeToString(tx), map[string]interface{}{
+				"encoding": "base64", "sigVerify": false, "replaceRecentBlockhash": true, "commitment": "confirmed",
+			}},
+		}
+		res := &struct {
+			BaseResponse
+			Result struct {
+				Value json.RawMessage `json:"value"`
+			} `json:"result"`
+		}{}
+		if err := h.rpc.Post(ctx, res, "", req); err != nil {
+			return "", fmt.Errorf("failed to simulateTransaction, err=%v", err)
+		} else if res.Error.Code != 0 {
+			return "", fmt.Errorf("failed to simulateTransaction, errMsg=%s", res.Error.Message)
+		}
+		return string(res.Result.Value), nil
 	case "getAccountInfo":
+		account := params
 		req := &BaseRequest{
 			JsonRPC: "2.0",
 			ID:      0,
 			Method:  "getAccountInfo",
 			Params: []interface{}{
-				params,
+				account,
 				struct {
 					Encoding string `json:"encoding"`
 				}{
@@ -227,6 +333,53 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 			return "", fmt.Errorf("failed to getAccountInfo, errMsg=%s", res.Error.Message)
 		}
 		valueBytes, err := json.Marshal(res.Result.Value)
+		if err != nil {
+			return "", fmt.Errorf("failed to Marshal for result, err=%v", err)
+		}
+		return string(valueBytes), nil
+	case "getAddressLookupTable":
+		req := &BaseRequest{
+			JsonRPC: "2.0",
+			ID:      0,
+			Method:  "getAccountInfo",
+			Params: []interface{}{
+				params,
+				struct {
+					Encoding string `json:"encoding"`
+				}{"jsonParsed"},
+			},
+		}
+		res := &struct {
+			Error *struct {
+				Message string `json:"message"`
+			} `json:"error"`
+			Result struct {
+				Value *struct {
+					Data struct {
+						Parsed struct {
+							Type string `json:"type"`
+							Info struct {
+								Addresses []string `json:"addresses"`
+							} `json:"info"`
+						} `json:"parsed"`
+					} `json:"data"`
+				} `json:"value"`
+			} `json:"result"`
+		}{}
+		if err := h.rpc.Post(ctx, res, "", req); err != nil {
+			return "", fmt.Errorf("failed to getAccountInfo, err=%v", err)
+		} else if res.Error != nil {
+			return "", fmt.Errorf("failed to getAccountInfo, errMsg=%s", res.Error.Message)
+		} else if res.Result.Value == nil {
+			return "", fmt.Errorf("address lookup table account does not exist")
+		} else if res.Result.Value.Data.Parsed.Type != "lookupTable" {
+			return "", fmt.Errorf("account is not an address lookup table")
+		}
+		addresses := res.Result.Value.Data.Parsed.Info.Addresses
+		if addresses == nil {
+			addresses = []string{}
+		}
+		valueBytes, err := json.Marshal(addresses)
 		if err != nil {
 			return "", fmt.Errorf("failed to Marshal for result, err=%v", err)
 		}
@@ -320,13 +473,13 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 		}
 		return "false", nil
 	case "getBlockByNumber":
-		height, err := strconv.ParseUint(params, 10, 64)
+		blockNumber, err := strconv.ParseUint(params, 10, 64)
 		if err != nil {
-			return "", fmt.Errorf("failed to ParseUint for height, err=%v", err)
+			return "", fmt.Errorf("failed to ParseUint for blockNumber, err=%v", err)
 		}
-		block, err := h.getBlockByNumber(ctx, height)
+		block, err := h.getBlockByNumber(ctx, blockNumber)
 		if err != nil {
-			return "", fmt.Errorf("failed to getBlockByNumber, height=%d, err=%v", height, err)
+			return "", fmt.Errorf("failed to getBlockByNumber, blockNumber=%d, err=%v", blockNumber, err)
 		}
 		var blockTx RpcBlock
 		blockTx.Transactions = block.Result.Transactions
@@ -336,11 +489,12 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 		}
 		return string(blockTxBytes), nil
 	case "isBlockHashValid":
+		blockHash := params
 		req := &BaseRequest{
 			JsonRPC: "2.0",
 			ID:      0,
 			Method:  "isBlockhashValid",
-			Params:  []string{params},
+			Params:  []string{blockHash},
 		}
 		res := &IsBlockHashValidRes{}
 		err := h.rpc.Post(ctx, res, "", req)
@@ -351,13 +505,14 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 		}
 		return strconv.FormatBool(res.Result.Value), nil
 	case "getTokenInfo":
+		mint := params
 		//first try
 		tokenInfo := &chainrpc.TokenInfo{}
 		{
 			var out []HeliusTokenMetaResItem
 			req := &HeliusTokenMetaReq{
 				MintAccounts: []string{
-					params,
+					mint,
 				},
 			}
 			err := h.heliusApi.Post(ctx, &out, "", req)
@@ -395,7 +550,7 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 			req := &HeliusTokenMetaMainReq{}
 			req.Jsonrpc = "2.0"
 			req.Id = "my-id"
-			req.Params.Id = params
+			req.Params.Id = mint
 			req.Method = "getAsset"
 			req.Params.DisplayOptions.ShowFungible = true
 
@@ -433,12 +588,13 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 		}
 		return strconv.FormatUint(res.Result, 10), nil
 	case "getNonceAccountBlockHash":
+		account := params
 		req := &BaseRequest{
 			JsonRPC: "2.0",
 			ID:      0,
 			Method:  "getAccountInfo",
 			Params: []interface{}{
-				params,
+				account,
 				struct {
 					Encoding string `json:"encoding"`
 				}{
@@ -478,14 +634,15 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 		}
 		return strconv.FormatUint(maxFee, 10), nil
 	case "getTokenDecimals":
-		if params == signing.MagicContactAddressForNative {
+		mint := params
+		if mint == signing.MagicContactAddressForNative {
 			return "9", nil
 		}
 		{
 			var out []HeliusTokenMetaResItem
 			req := &HeliusTokenMetaReq{
 				MintAccounts: []string{
-					params,
+					mint,
 				},
 			}
 			err := h.heliusApi.Post(ctx, &out, "", req)
@@ -509,7 +666,7 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 			req := &HeliusTokenMetaMainReq{}
 			req.Jsonrpc = "2.0"
 			req.Id = "my-id"
-			req.Params.Id = params
+			req.Params.Id = mint
 			req.Method = "getAsset"
 			req.Params.DisplayOptions.ShowFungible = true
 
@@ -523,6 +680,38 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 			}
 			return decimals, nil
 		}
+	case "getTxWithLogsByHash":
+		tmp := strings.Split(params, "_")
+		if len(tmp) != 2 {
+			return "", fmt.Errorf("len(tmp) != 2")
+		}
+		txHash := tmp[0]
+		version, err := strconv.ParseInt(tmp[1], 10, 64)
+		if err != nil {
+			return "", fmt.Errorf("failed to ParseInt for version, err=%v", err)
+		}
+		req := &BaseRequest{
+			JsonRPC: "2.0",
+			ID:      1,
+			Method:  "getTransaction",
+			Params: []interface{}{
+				txHash,
+				SearchTransaction{
+					Commitment:                     "finalized",
+					MaxSupportedTransactionVersion: version,
+				},
+			},
+		}
+		res := &GetTransactionWithLog{}
+		err = h.rpc.Post(ctx, res, "", req)
+		if err != nil {
+			return "", fmt.Errorf("failed to getTransaction, err=%v", err)
+		} else if res.Error.Code != 0 {
+			return "", fmt.Errorf("failed to getTransaction, err=%s", res.Error.Message)
+		}
+
+		txWithLogs, _ := json.Marshal(res)
+		return string(txWithLogs), nil
 	}
 	return "", fmt.Errorf("unsupported funciton")
 }

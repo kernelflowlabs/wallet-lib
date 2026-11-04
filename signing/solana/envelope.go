@@ -3,6 +3,7 @@ package solana
 import (
 	"encoding/binary"
 	"fmt"
+	"math/bits"
 
 	"github.com/blocto/solana-go-sdk/types"
 )
@@ -52,6 +53,9 @@ func ValidateTransactionEnvelope(data []byte) error {
 	if len(data) == 0 {
 		return fmt.Errorf("transaction is empty")
 	}
+	if data[0] == 0x81 {
+		return validateTransactionV1(data)
+	}
 	if len(data) > MaxTransactionBytes {
 		return fmt.Errorf("transaction is %d bytes, the chain accepts at most %d", len(data), MaxTransactionBytes)
 	}
@@ -78,6 +82,81 @@ func ValidateTransactionEnvelope(data []byte) error {
 	}
 	if uint64(header) != signatures {
 		return fmt.Errorf("transaction declares %d signatures but its message requires %d", signatures, header)
+	}
+	return nil
+}
+
+func validateTransactionV1(data []byte) error {
+	if len(data) > 4096 {
+		return fmt.Errorf("v1 transaction exceeds 4096 bytes")
+	}
+	if len(data) < 42 {
+		return fmt.Errorf("v1 transaction header is truncated")
+	}
+	signatures := int(data[1])
+	if int(data[2]) >= signatures || signatures > 12 {
+		return fmt.Errorf("invalid v1 signature counts")
+	}
+	mask := binary.LittleEndian.Uint32(data[4:8])
+	if mask&3 != 0 && mask&3 != 3 {
+		return fmt.Errorf("v1 config bits 0 and 1 must match")
+	}
+	instructions, addresses := int(data[40]), int(data[41])
+	if instructions > 64 {
+		return fmt.Errorf("v1 instruction count exceeds 64")
+	}
+	if addresses < signatures+int(data[3]) || addresses > 96 {
+		return fmt.Errorf("invalid v1 address count")
+	}
+	at := 42
+	if addresses > (len(data)-at)/32 {
+		return fmt.Errorf("v1 addresses are truncated")
+	}
+	at += addresses * 32
+	configBytes := bits.OnesCount32(mask) * 4
+	if configBytes > len(data)-at {
+		return fmt.Errorf("v1 config values are truncated")
+	}
+	if mask&(1<<4) != 0 {
+		heapAt := at + bits.OnesCount32(mask&15)*4
+		heap := binary.LittleEndian.Uint32(data[heapAt : heapAt+4])
+		if heap < 32768 || heap > 262144 || heap%1024 != 0 {
+			return fmt.Errorf("invalid v1 heap value")
+		}
+	}
+	at += configBytes
+	if instructions > (len(data)-at)/4 {
+		return fmt.Errorf("v1 instruction headers are truncated")
+	}
+	headers := data[at : at+instructions*4]
+	at += instructions * 4
+	for i := 0; i < instructions; i++ {
+		header := headers[i*4 : i*4+4]
+		if int(header[0]) >= addresses {
+			return fmt.Errorf("invalid v1 program account index")
+		}
+		accounts := int(header[1])
+		dataBytes := int(binary.LittleEndian.Uint16(header[2:4]))
+		if accounts > len(data)-at {
+			return fmt.Errorf("v1 instruction accounts are truncated")
+		}
+		for _, index := range data[at : at+accounts] {
+			if int(index) >= addresses {
+				return fmt.Errorf("invalid v1 instruction account index")
+			}
+		}
+		at += accounts
+		if dataBytes > len(data)-at {
+			return fmt.Errorf("v1 instruction data is truncated")
+		}
+		at += dataBytes
+	}
+	if signatures > (len(data)-at)/64 {
+		return fmt.Errorf("v1 signatures are truncated")
+	}
+	at += signatures * 64
+	if at != len(data) {
+		return fmt.Errorf("v1 transaction has trailing bytes")
 	}
 	return nil
 }
@@ -212,6 +291,9 @@ func validateMessageAt(data []byte, at int) (int, uint8, error) {
 func SafeTransactionDeserialize(data []byte) (tx types.Transaction, err error) {
 	if err = ValidateTransactionEnvelope(data); err != nil {
 		return types.Transaction{}, err
+	}
+	if data[0] == 0x81 {
+		return types.Transaction{}, fmt.Errorf("v1 transactions cannot be parsed")
 	}
 	defer func() {
 		if r := recover(); r != nil {

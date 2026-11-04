@@ -41,7 +41,7 @@ bash "$root/mobile/check-go-version.sh"
 DIST="./dist"
 mkdir -p "$DIST"
 
-PKGS="./mobile/acc ./mobile/tx ./mobile/util ./mobile/trade"
+PKGS="./mobile/acc ./mobile/tx ./mobile/util"
 
 build_android() {
   echo "=> Building ANDROID AAR..."

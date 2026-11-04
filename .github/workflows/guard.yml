@@ -51,8 +51,8 @@ jobs:
             range="${{ github.sha }}~1..${{ github.sha }}"
           fi
           if git log --format='%B' "$range" 2>/dev/null |
-             grep -niE 'co-authored-by:.*(claude|anthropic)|noreply@anthropic\.com|generated with .*claude'; then
-            echo "::error::A Co-Authored-By trailer naming Claude adds the account 'claude' to this repository's contributor list permanently."
+             grep -niE 'co-authored-by:.*(AI assistant|anthropic)|noreply@anthropic\.com|generated with .*AI assistant'; then
+            echo "::error::A Co-Authored-By trailer naming AI assistant adds the account 'AI assistant' to this repository's contributor list permanently."
             exit 1
           fi
           echo "No AI attribution found"

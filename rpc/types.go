@@ -41,6 +41,7 @@ type (
 		TxHash      string `json:"txHash,omitempty"`
 	}
 	BasicEvmTx struct {
+		Nonce   string `json:"nonce"`
 		Hash    string `json:"hash"`
 		From    string `json:"from"`
 		To      string `json:"to"`

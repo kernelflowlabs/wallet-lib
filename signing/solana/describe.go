@@ -81,19 +81,33 @@ var (
 func DescribeSolTransaction(txBytes []byte, ownerAddress string) string {
 	out := &TransactionDescription{Warnings: []string{}, Instructions: []InstructionView{}}
 
-	tx, err := SafeTransactionDeserialize(txBytes)
-	if err != nil {
-		out.DecodeError = err.Error()
-		return marshalSolDescription(out)
-	}
-	roundTrip, err := tx.Serialize()
-	if err != nil {
-		out.DecodeError = err.Error()
-		return marshalSolDescription(out)
-	}
-	if !bytes.Equal(roundTrip, txBytes) {
-		out.DecodeError = "transaction does not survive a serialization round trip; refusing to describe a re-encoding"
-		return marshalSolDescription(out)
+	var tx types.Transaction
+	var config map[string]interface{}
+	if len(txBytes) > 0 && txBytes[0] == 0x81 {
+		parsed, err := ParseV1Transaction(txBytes)
+		if err != nil {
+			out.DecodeError = err.Error()
+			return marshalSolDescription(out)
+		}
+		tx = types.Transaction{Message: parsed.descriptionMessage(), Signatures: parsed.Signatures}
+		config = parsed.descriptionConfig()
+	} else {
+		var err error
+		tx, err = SafeTransactionDeserialize(txBytes)
+		if err != nil {
+			out.DecodeError = err.Error()
+			return marshalSolDescription(out)
+		}
+		roundTrip, err := tx.Serialize()
+		if err != nil {
+			out.DecodeError = err.Error()
+			return marshalSolDescription(out)
+		}
+		if !bytes.Equal(roundTrip, txBytes) {
+			out.DecodeError = "transaction does not survive a serialization round trip; refusing to describe a re-encoding"
+			return marshalSolDescription(out)
+		}
+
 	}
 	message := tx.Message
 
@@ -147,6 +161,18 @@ func DescribeSolTransaction(txBytes []byte, ownerAddress string) string {
 	}
 	if unresolved {
 		out.Warnings = append(out.Warnings, WarnUnresolvedLookup)
+	}
+	if len(config) > 0 {
+		encoded := marshalSolDescription(out)
+		var fields map[string]interface{}
+		if json.Unmarshal([]byte(encoded), &fields) == nil {
+			for name, value := range config {
+				fields[name] = value
+			}
+			if result, err := json.Marshal(fields); err == nil {
+				return string(result)
+			}
+		}
 	}
 	return marshalSolDescription(out)
 }

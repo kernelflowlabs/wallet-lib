@@ -27,6 +27,9 @@ type SignedDappTransaction struct {
 // the user was shown, and any disagreement between the two encoders would be
 // invisible.
 func SignSerializedTransaction(privateKey, txBytes []byte) (*SignedDappTransaction, error) {
+	if len(txBytes) > 0 && txBytes[0] == 0x81 {
+		return signV1Transaction(privateKey, txBytes)
+	}
 	tx, err := SafeTransactionDeserialize(txBytes)
 	if err != nil {
 		return nil, err
@@ -117,6 +120,9 @@ func SignMessage(privateKey, message []byte) (string, error) {
 // leading byte, so what is left is the only question that matters: does this
 // parse as something that could be broadcast?
 func looksLikeTransaction(message []byte) bool {
+	if ValidateTransactionEnvelope(message) == nil {
+		return true
+	}
 	if _, err := SafeMessageDeserialize(message); err == nil {
 		return true
 	}

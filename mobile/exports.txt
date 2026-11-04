@@ -109,14 +109,6 @@ mobile/acc	type SuiAccount struct{ ... }
 mobile/acc	type TonAccount struct{ ... }
 mobile/acc	type TrxAccount struct{ ... }
 mobile/acc	type UtxoAccount struct{ ... }
-mobile/trade	func AttachUniv3Permit(reqJSON string) string
-mobile/trade	func AutoQuote(reqJSON string) string
-mobile/trade	func BuildTx(reqJSON string) string
-mobile/trade	func BuildUniv3PermitTypedData(reqJSON string) string
-mobile/trade	func CheckTx(reqJSON string) string
-mobile/trade	func Init(configJSON string) string
-mobile/trade	func SubmitIntent(reqJSON string) string
-mobile/trade	func Version() string
 mobile/tx	const MobileMagicAddressForZeroEVM = signing.MagicAddressForZeroEVM ...
 mobile/tx	const MobileTxStatusUnknown = signing.TxStatusUnknown ...
 mobile/tx	const MobileTxTypeTransfer = signing.TxTypeTransfer ...

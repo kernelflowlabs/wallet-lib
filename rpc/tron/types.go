@@ -33,6 +33,16 @@ type (
 		Value string `json:"value"`
 	}
 	GetTransactionInfoByIdRes struct {
+		Error                string `json:"Error"`
+		InternalTransactions []struct {
+			CallerAddress     string `json:"caller_address"`
+			TransferToAddress string `json:"transferTo_address"`
+			Rejected          bool   `json:"rejected"`
+			CallValueInfo     []struct {
+				CallValue *big.Int `json:"callValue"`
+				TokenID   string   `json:"tokenId"`
+			} `json:"callValueInfo"`
+		} `json:"internal_transactions"`
 		Result         string `json:"result"`
 		TxID           string `json:"id"`
 		BlockNumber    uint64 `json:"blockNumber"`
@@ -91,6 +101,7 @@ type (
 		Timestamp      int64  `json:"timestamp"`
 	}
 	Tx struct {
+		Error     string   `json:"Error"`
 		Ret       []TxRet  `json:"ret,omitempty"`
 		Signature []string `json:"signature,omitempty"`
 		ID        string   `json:"txID,omitempty"`

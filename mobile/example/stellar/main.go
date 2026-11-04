@@ -36,7 +36,7 @@ func main() {
 		log.Fatalf("rpc handler: %v", err)
 	}
 
-	activated, err := h.InquireChain(ctx, "IsAccountActivated", sender)
+	activated, err := h.InquireChain(ctx, "isAccountActivated", sender)
 	if err != nil {
 		log.Fatalf("IsAccountActivated: %v", err)
 	}

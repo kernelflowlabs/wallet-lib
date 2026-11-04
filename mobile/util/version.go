@@ -16,7 +16,8 @@ package util
 //	   and SignTypedDataJSON gaining its expectedSigner argument
 //	3  byte-slice mnemonic entry points, chain-bound session signing, and the
 //	   Solana dApp signers gaining their expectedHash argument
-const bindingRevision = 3
+//	4  mobile/trade removed
+const bindingRevision = 4
 
 func BindingRevision() int {
 	return bindingRevision

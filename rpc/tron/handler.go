@@ -1,6 +1,7 @@
 package tron
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
@@ -101,45 +102,99 @@ func (h *Handler) GetTransfersByHash(ctx context.Context, hash string,
 		return nil, fmt.Errorf("failed to gettransactionbyid, err=%v", err)
 	}
 
-	transfer := &chainrpc.Transfer{}
-	if tx.Data.Contracts[0].Type == "TransferContract" {
-		transfer.Sender = wallettron.ConvertFromHex(tx.Data.Contracts[0].Parameter.Value.OwnerAddress)
-		transfer.Recipient = wallettron.ConvertFromHex(tx.Data.Contracts[0].Parameter.Value.ToAddress)
-		amt := tx.Data.Contracts[0].Parameter.Value.Amount
-		transfer.Amount = amt.String()
-		transfer.ContractAddress = signing.MagicContactAddressForNative
+	if tx.Error != "" {
+		return nil, fmt.Errorf("failed to gettransactionbyid: %s", tx.Error)
+	}
 
-		if transfer.Sender != "" &&
-			transfer.Recipient != "" &&
-			transfer.Amount != "" &&
-			transfer.ContractAddress != "" {
-			result.Transfers = append(result.Transfers, transfer)
-			result.BalanceChange = append(result.BalanceChange, &chainrpc.BalanceChange{
-				Address:         transfer.Sender,
-				ContractAddress: transfer.ContractAddress,
-				Change:          new(big.Int).Neg(amt).String(),
-			})
-			result.BalanceChange = append(result.BalanceChange, &chainrpc.BalanceChange{
-				Address:         transfer.Recipient,
-				ContractAddress: transfer.ContractAddress,
-				Change:          amt.String(),
+	if len(tx.Data.Contracts) == 0 {
+		return nil, fmt.Errorf("transaction has no contracts")
+	}
+	contract := tx.Data.Contracts[0]
+	value := contract.Parameter.Value
+	if contract.Type == "TransferContract" {
+		sender := wallettron.ConvertFromHex(value.OwnerAddress)
+		recipient := wallettron.ConvertFromHex(value.ToAddress)
+		if value.Amount != nil && sender != "" && recipient != "" {
+			result.Transfers = append(result.Transfers, &chainrpc.Transfer{
+				Sender: sender, Recipient: recipient, Amount: value.Amount.String(),
+				ContractAddress: signing.MagicContactAddressForNative,
 			})
 		}
-	} else if tx.Data.Contracts[0].Type == "TriggerSmartContract" {
-		transfers, changes, err := trc20TransfersFromLogs(txResult.Logs)
-		if err != nil {
-			result.Rejected = true
-			result.ErrMsg = err.Error()
-			return result, nil
+	} else if contract.Type == "TriggerSmartContract" {
+		transfers, _, err := trc20TransfersFromLogs(txResult.Logs)
+		if err == nil {
+			result.Transfers = append(result.Transfers, transfers...)
 		}
-		result.Transfers = append(result.Transfers, transfers...)
-		result.BalanceChange = append(result.BalanceChange, changes...)
+		if value.CallValue != nil && value.CallValue.Sign() > 0 {
+			result.Transfers = append(result.Transfers, &chainrpc.Transfer{
+				Sender:          wallettron.ConvertFromHex(value.OwnerAddress),
+				Recipient:       wallettron.ConvertFromHex(value.ContractAddress),
+				Amount:          value.CallValue.String(),
+				ContractAddress: signing.MagicContactAddressForNative,
+			})
+		}
 	} else {
 		result.Rejected = true
 		result.ErrMsg = "invalid tx type"
 		return result, nil
 	}
-
+	if withInternal {
+		info := &GetTransactionInfoByIdRes{}
+		if err := h.rpc.Post(ctx, info, "wallet/gettransactioninfobyid", in); err != nil {
+			return nil, fmt.Errorf("failed to gettransactioninfobyid, err=%v", err)
+		}
+		if info.Error != "" {
+			return nil, fmt.Errorf("failed to gettransactioninfobyid: %s", info.Error)
+		}
+		for _, internal := range info.InternalTransactions {
+			if internal.Rejected {
+				continue
+			}
+			amount := new(big.Int)
+			for _, value := range internal.CallValueInfo {
+				if (value.TokenID == "" || value.TokenID == "_") && value.CallValue != nil && value.CallValue.Sign() > 0 {
+					amount.Add(amount, value.CallValue)
+				}
+			}
+			if amount.Sign() > 0 {
+				result.Transfers = append(result.Transfers, &chainrpc.Transfer{
+					Sender:          wallettron.ConvertFromHex(internal.CallerAddress),
+					Recipient:       wallettron.ConvertFromHex(internal.TransferToAddress),
+					Amount:          amount.String(),
+					ContractAddress: signing.MagicContactAddressForNative,
+				})
+			}
+		}
+	}
+	balanceMap := make(map[string]map[string]*big.Int)
+	for _, transfer := range result.Transfers {
+		amount, ok := new(big.Int).SetString(transfer.Amount, 10)
+		if !ok {
+			return nil, fmt.Errorf("invalid transfer amount %q", transfer.Amount)
+		}
+		for i, address := range []string{transfer.Sender, transfer.Recipient} {
+			if balanceMap[address] == nil {
+				balanceMap[address] = make(map[string]*big.Int)
+			}
+			if balanceMap[address][transfer.ContractAddress] == nil {
+				balanceMap[address][transfer.ContractAddress] = new(big.Int)
+			}
+			if i == 0 {
+				balanceMap[address][transfer.ContractAddress].Sub(balanceMap[address][transfer.ContractAddress], amount)
+			} else {
+				balanceMap[address][transfer.ContractAddress].Add(balanceMap[address][transfer.ContractAddress], amount)
+			}
+		}
+	}
+	for address, contracts := range balanceMap {
+		for contract, change := range contracts {
+			if change.Sign() != 0 {
+				result.BalanceChange = append(result.BalanceChange, &chainrpc.BalanceChange{
+					Address: address, ContractAddress: contract, Change: change.String(),
+				})
+			}
+		}
+	}
 	return result, nil
 }
 
@@ -198,22 +253,33 @@ func (h *Handler) SendTx(ctx context.Context, signedHex string) (string, error) 
 	if err != nil {
 		return "", fmt.Errorf("failed to DecodeString, err=%v", err)
 	}
-	ntx := &wallettron.NativeTx{}
-	err = json.Unmarshal(signedBytes, ntx)
-	if err != nil {
-		return "", fmt.Errorf("failed to Unmarshal for ntx, err=%v", err)
-	}
-	req := &BroadcastJsonRawTransactionReq{
-		Signature: ntx.Signature,
-		ID:        ntx.ID,
-		RawData:   ntx.RawData,
+	var req interface{}
+	endpoint := "wallet/broadcasthex"
+	if trimmed := bytes.TrimSpace(signedBytes); len(trimmed) > 0 && trimmed[0] == '{' {
+		ntx := &wallettron.NativeTx{}
+		err = json.Unmarshal(signedBytes, ntx)
+		if err != nil {
+			return "", fmt.Errorf("failed to Unmarshal for ntx, err=%v", err)
+		}
+		req = &BroadcastJsonRawTransactionReq{
+			Signature: ntx.Signature,
+			ID:        ntx.ID,
+			RawData:   ntx.RawData,
+		}
+		endpoint = "wallet/broadcasttransaction"
+	} else {
+		req = &BroadcastProtoRawTransactionReq{Transaction: strings.TrimPrefix(signedHex, "0x")}
 	}
 	res := &BroadcastJsonRawTransactionRes{}
-	err = h.rpc.Post(ctx, res, "wallet/broadcasttransaction", req)
+	err = h.rpc.Post(ctx, res, endpoint, req)
 	if err != nil {
 		return "", fmt.Errorf("failed to broadcasttransaction, err=%v", err)
 	} else if res.Result == false {
 		return "", fmt.Errorf("failed to broadcasttransaction, errCode=%v, errMsg=%v", res.Code, res.Message)
+	}
+
+	if res.TxID == "" {
+		return "", fmt.Errorf("failed to broadcasttransaction, txid is empty")
 	}
 
 	return res.TxID, nil
@@ -234,6 +300,10 @@ func (h *Handler) CheckTx(ctx context.Context, hash string) (*chainrpc.TxResult,
 		return nil, fmt.Errorf("failed to gettransactioninfobyid, err=%v", err)
 	}
 
+	if res.Error != "" {
+		return nil, fmt.Errorf("failed to gettransactioninfobyid: %s", res.Error)
+	}
+
 	r.Height = strconv.FormatUint(res.BlockNumber, 10)
 	r.Time = strconv.FormatInt(res.BlockTimeStamp/1000, 10)
 	r.GasUsed = strconv.FormatUint(res.Receipt.NetUsage, 10)
@@ -241,10 +311,12 @@ func (h *Handler) CheckTx(ctx context.Context, hash string) (*chainrpc.TxResult,
 		r.Status = signing.TxStatusFailed
 		r.ErrMsg = res.Result
 	} else {
-		ntx := &wallettron.NativeTx{}
+		ntx := &Tx{}
 		err = h.rpc.Post(ctx, ntx, "wallet/gettransactionbyid", req)
 		if err != nil {
 			return nil, fmt.Errorf("failed to gettransactionbyid, err=%v", err)
+		} else if ntx.Error != "" {
+			return nil, fmt.Errorf("failed to gettransactionbyid: %s", ntx.Error)
 		} else if len(ntx.Ret) < 1 {
 			r.Status = signing.TxStatusPending
 		} else if ntx.Ret[0].ContractRet == "SUCCESS" && r.Height != "0" {
@@ -260,6 +332,9 @@ func (h *Handler) CheckTx(ctx context.Context, hash string) (*chainrpc.TxResult,
 				logs = append(logs, log)
 			}
 			r.Logs = logs
+		} else if ntx.Ret[0].ContractRet != "" && ntx.Ret[0].ContractRet != "SUCCESS" && res.BlockNumber != 0 {
+			r.Status = signing.TxStatusFailed
+			r.ErrMsg = ntx.Ret[0].ContractRet
 		} else {
 			r.Status = signing.TxStatusPending
 		}
@@ -273,6 +348,16 @@ func (h *Handler) CallContract(ctx context.Context, contractAddress, params, blo
 
 func (h *Handler) InquireChain(ctx context.Context, instruction, params string) (string, error) {
 	switch instruction {
+	case "isTxExisted":
+		req := &GetTransactionInfoByIdReq{Value: params}
+		res := &Tx{}
+		if err := h.rpc.Post(ctx, res, "wallet/gettransactionbyid", req); err != nil {
+			return "", fmt.Errorf("failed to gettransactionbyid, err=%v", err)
+		}
+		if res.Error != "" {
+			return "", fmt.Errorf("failed to gettransactionbyid: %s", res.Error)
+		}
+		return strconv.FormatBool(res.ID != ""), nil
 	case "getRefInfo":
 		blockHeight := params
 		var err error

@@ -19,7 +19,6 @@ require (
 	github.com/btcsuite/btcd/wire/v2 v2.0.1
 	github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.1
 	github.com/dchest/blake2b v1.0.0
-	github.com/dontpanicdao/caigo v0.4.1
 	github.com/ethereum/go-ethereum v1.17.8
 	github.com/fxamacker/cbor v1.5.1
 	github.com/go-jose/go-jose/v4 v4.1.5
@@ -76,7 +75,6 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/gtank/ristretto255 v0.1.2 // indirect
 	github.com/hashicorp/go-bexpr v0.1.12 // indirect

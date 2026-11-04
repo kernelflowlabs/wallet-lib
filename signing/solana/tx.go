@@ -28,6 +28,14 @@ func NewTxBuilderFromUnsignedHex(unsignedHex string) (*TxBuilder, error) {
 		return nil, fmt.Errorf("failed to decode unsignedHex, err=%v", err)
 	}
 
+	if len(txBytes) > 0 && txBytes[0] == 0x81 {
+		parsed, err := ParseV1Transaction(txBytes)
+		if err != nil {
+			return nil, err
+		}
+		return &TxBuilder{Ingredient: &Ingredient{}, unsignedHex: hex.EncodeToString(txBytes), sigHash: []string{hex.EncodeToString(parsed.Message)}, fromUnsignedHex: true}, nil
+	}
+
 	ntx, err := types.TransactionDeserialize(txBytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to TransactionDeserialize, err=%v", err)
@@ -58,6 +66,15 @@ func (tx *TxBuilder) Build() error {
 		ntxBytes, err := hex.DecodeString(tx.unsignedHex)
 		if err != nil {
 			return fmt.Errorf("failed to DecodeString for UnsignedHex, err=%v", err)
+		}
+		if len(ntxBytes) > 0 && ntxBytes[0] == 0x81 {
+			parsed, err := ParseV1Transaction(ntxBytes)
+			if err != nil {
+				return err
+			}
+			tx.Ingredient = &Ingredient{RefBlockHash: parsed.Blockhash}
+			tx.sigHash = []string{hex.EncodeToString(parsed.Message)}
+			return nil
 		}
 		ntx, err = types.TransactionDeserialize(ntxBytes)
 		if err != nil {
@@ -271,6 +288,28 @@ func (tx *TxBuilder) ConcatSignature(signature string, isDerFormat bool) (string
 	ntxBytes, err := hex.DecodeString(tx.unsignedHex)
 	if err != nil {
 		return "", fmt.Errorf("failed to DecodeString for UnsignedHex, err=%v", err)
+	}
+	if len(ntxBytes) > 0 && ntxBytes[0] == 0x81 {
+		parsed, err := ParseV1Transaction(ntxBytes)
+		if err != nil {
+			return "", err
+		}
+		if isDerFormat {
+			return "", fmt.Errorf("DER signature format not supported")
+		}
+		if tx.Ingredient != nil && (tx.Ingredient.TxType == signing.TxTypeAccountActivate || tx.Ingredient.NonceAccountPrivateKey != "") {
+			return "", fmt.Errorf("v1 nonce account activation is not supported")
+		}
+		sig, err := hex.DecodeString(signature)
+		if err != nil {
+			return "", fmt.Errorf("failed to decode signature: %w", err)
+		}
+		signed, err := parsed.withSignature(0, sig)
+		if err != nil {
+			return "", err
+		}
+		tx.txHash = base58.Encode(sig)
+		return hex.EncodeToString(signed), nil
 	}
 	ntx, err := types.TransactionDeserialize(ntxBytes)
 	if err != nil {

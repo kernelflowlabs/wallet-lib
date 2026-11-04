@@ -204,7 +204,7 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 			return "", fmt.Errorf("fail to getAccountInfo, err=%v", err)
 		}
 		return out.Sequence, nil
-	case "IsAccountActivated":
+	case "isAccountActivated":
 		_, err := h.getAccountInfo(ctx, params)
 		if err != nil {
 			if strings.Contains(err.Error(), "account not activated") {

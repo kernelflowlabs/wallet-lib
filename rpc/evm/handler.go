@@ -190,7 +190,9 @@ func (h *Handler) GetTransfersByHash(ctx context.Context, hash string, confirmat
 		}
 		internalTxs := make([]*RpcInternalTx, 0)
 		if withInternal {
-			_ = h.rpc.CallContext(ctx, &internalTxs, "trace_transaction", hash)
+			if err := h.rpc.CallContext(ctx, &internalTxs, "trace_transaction", hash); err != nil {
+				return nil, fmt.Errorf("failed to trace_transaction, err=%w", err)
+			}
 		}
 		transfers, balanceChange, err := h.getTxTransferForEVMFromContract(tx, receipt, internalTxs)
 		if err != nil {
@@ -250,6 +252,9 @@ func (h *Handler) CheckTx(ctx context.Context, hash string) (*chainrpc.TxResult,
 		return r, nil
 	}
 
+	blockNumber, _ := strconv.ParseUint(strings.TrimPrefix(receipt.BlockNumber, "0x"), 16, 64)
+	r.Height = strconv.FormatUint(blockNumber, 10)
+
 	if receipt.Status == "0x0" {
 		r.Status = signing.TxStatusFailed
 		params := map[string]string{
@@ -267,8 +272,6 @@ func (h *Handler) CheckTx(ctx context.Context, hash string) (*chainrpc.TxResult,
 			r.ErrMsg = reason
 		}
 	} else if receipt.Status == "0x1" {
-		blockNumber, _ := strconv.ParseUint(strings.TrimPrefix(receipt.BlockNumber, "0x"), 16, 64)
-		r.Height = strconv.FormatUint(blockNumber, 10)
 		r.Status = signing.TxStatusSucceeded
 	} else {
 		return nil, fmt.Errorf("weird")
@@ -365,6 +368,28 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 			return "", err
 		}
 		return gasTipCap.String(), nil
+	case "simulateCall":
+		tmp := strings.Split(params, ":")
+		if len(tmp) != 4 {
+			return "", fmt.Errorf("invalid params")
+		}
+		fromAddr := common.HexToAddress(tmp[0])
+		toAddr := common.HexToAddress(tmp[1])
+		value, ok := new(big.Int).SetString(tmp[2], 10)
+		if !ok {
+			return "", fmt.Errorf("failed to get value")
+		}
+		data, err := hex.DecodeString(strings.TrimPrefix(tmp[3], "0x"))
+		if err != nil {
+			return "", err
+		}
+		result, err := h.client.CallContract(ctx, ethereum.CallMsg{
+			From: fromAddr, To: &toAddr, Value: value, Data: data,
+		}, nil)
+		if err != nil {
+			return "", err
+		}
+		return "0x" + hex.EncodeToString(result), nil
 	case "estimateGas":
 		tmp := strings.Split(params, ":")
 		if len(tmp) != 5 {
@@ -524,7 +549,7 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 			return "", fmt.Errorf("failed to Marshal, err=%v", err)
 		}
 		return string(blockBytes), nil
-	case "IsTxExisted":
+	case "isTxExisted":
 		tx := &RpcTransaction{}
 		err := h.rpc.CallContext(ctx, tx, "eth_getTransactionByHash", params)
 		if err != nil {
@@ -836,10 +861,6 @@ func (h *Handler) getTxTransferForEVMFromContract(tx *RpcTransaction, receipt *R
 				}
 			}
 		}
-	}
-
-	if len(transferList) == 0 {
-		return nil, nil, fmt.Errorf("no transfers found in contract call")
 	}
 
 	balanceChanges := make([]*chainrpc.BalanceChange, 0)

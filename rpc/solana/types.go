@@ -233,16 +233,20 @@ type (
 	}
 	GetTransactionWithLog struct {
 		BaseResponse
-		Result struct {
+		Result *struct {
 			BlockTime int `json:"blockTime"`
 			Meta      struct {
 				ComputeUnitsConsumed int           `json:"computeUnitsConsumed"`
 				Err                  interface{}   `json:"err"`
 				Fee                  int           `json:"fee"`
 				InnerInstructions    []interface{} `json:"innerInstructions"`
-				LogMessages          []string      `json:"logMessages"`
-				PostBalances         []int         `json:"postBalances"`
-				PostTokenBalances    []struct {
+				LoadedAddresses      struct {
+					Writable []string `json:"writable"`
+					Readonly []string `json:"readonly"`
+				} `json:"loadedAddresses"`
+				LogMessages       []string `json:"logMessages"`
+				PostBalances      []uint64 `json:"postBalances"`
+				PostTokenBalances []struct {
 					AccountIndex  int    `json:"accountIndex"`
 					Mint          string `json:"mint"`
 					Owner         string `json:"owner"`
@@ -254,7 +258,7 @@ type (
 						UIAmountString string  `json:"uiAmountString"`
 					} `json:"uiTokenAmount"`
 				} `json:"postTokenBalances"`
-				PreBalances      []int `json:"preBalances"`
+				PreBalances      []uint64 `json:"preBalances"`
 				PreTokenBalances []struct {
 					AccountIndex  int    `json:"accountIndex"`
 					Mint          string `json:"mint"`
