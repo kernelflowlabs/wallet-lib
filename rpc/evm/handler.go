@@ -279,6 +279,7 @@ func (h *Handler) CheckTx(ctx context.Context, hash string) (*chainrpc.TxResult,
 	var logs []chainrpc.EvmLog
 	for _, v := range receipt.Logs {
 		log := chainrpc.EvmLog{
+			Index:   uint64(v.Index),
 			Address: v.Address,
 			Topics:  strings.Join(v.Topics, ","),
 			Data:    v.Data,
@@ -439,6 +440,7 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 		var logs []chainrpc.EvmLog
 		for _, v := range receipt.Logs {
 			log := chainrpc.EvmLog{
+				Index:   uint64(v.Index),
 				Address: v.Address,
 				Topics:  strings.Join(v.Topics, ","),
 				Data:    v.Data,
@@ -497,6 +499,7 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 				topics += "," + v.String()
 			}
 			log := chainrpc.EvmLog{
+				Index:       uint64(v.Index),
 				Address:     v.Address.Hex(),
 				Topics:      topics[1:],
 				Data:        common.Bytes2Hex(v.Data),

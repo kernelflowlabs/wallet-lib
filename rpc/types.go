@@ -34,6 +34,7 @@ type (
 		Logs    []EvmLog `json:"logs,omitempty"`
 	}
 	EvmLog struct {
+		Index       uint64 `json:"index"`
 		Address     string `json:"address"`
 		Topics      string `json:"topics"`
 		Data        string `json:"data"`

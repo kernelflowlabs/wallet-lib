@@ -1,5 +1,7 @@
 package evm
 
+import "github.com/ethereum/go-ethereum/common/hexutil"
+
 type (
 	RpcTransaction struct {
 		Hash        string `json:"hash"`
@@ -22,9 +24,10 @@ type (
 		Logs            []*RpcLog `json:"logs"`
 	}
 	RpcLog struct {
-		Address string   `json:"address"`
-		Topics  []string `json:"topics"`
-		Data    string   `json:"data"`
+		Index   hexutil.Uint64 `json:"logIndex"`
+		Address string         `json:"address"`
+		Topics  []string       `json:"topics"`
+		Data    string         `json:"data"`
 	}
 	RpcInternalTx struct {
 		Action *struct {
