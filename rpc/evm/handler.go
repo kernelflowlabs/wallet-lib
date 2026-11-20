@@ -17,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 )
@@ -387,6 +388,65 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 		result, err := h.client.CallContract(ctx, ethereum.CallMsg{
 			From: fromAddr, To: &toAddr, Value: value, Data: data,
 		}, nil)
+		if err != nil {
+			return "", err
+		}
+		return "0x" + hex.EncodeToString(result), nil
+	case "simulateCallWithOverrides":
+		var request struct {
+			From      string `json:"from"`
+			To        string `json:"to"`
+			Value     string `json:"value"`
+			Data      string `json:"data"`
+			Overrides map[common.Address]*struct {
+				Balance   *hexutil.Big                `json:"balance"`
+				Nonce     hexutil.Uint64              `json:"nonce"`
+				Code      hexutil.Bytes               `json:"code"`
+				State     map[common.Hash]common.Hash `json:"state"`
+				StateDiff map[common.Hash]common.Hash `json:"stateDiff"`
+			} `json:"overrides"`
+		}
+		decoder := json.NewDecoder(strings.NewReader(params))
+		decoder.DisallowUnknownFields()
+		if !json.Valid([]byte(params)) || decoder.Decode(&request) != nil {
+			return "", fmt.Errorf("invalid params")
+		}
+		if !strings.HasPrefix(request.From, "0x") || !common.IsHexAddress(request.From) ||
+			!strings.HasPrefix(request.To, "0x") || !common.IsHexAddress(request.To) ||
+			request.Value == "" || strings.Trim(request.Value, "0123456789") != "" {
+			return "", fmt.Errorf("invalid params")
+		}
+		value, ok := new(big.Int).SetString(request.Value, 10)
+		if !ok || value.BitLen() > 256 {
+			return "", fmt.Errorf("invalid params")
+		}
+		data, err := hexutil.Decode(request.Data)
+		if err != nil || !strings.HasPrefix(request.Data, "0x") {
+			return "", fmt.Errorf("invalid params")
+		}
+		overrides := make(map[common.Address]ethereum.OverrideAccount, len(request.Overrides))
+		for address, account := range request.Overrides {
+			if account == nil {
+				return "", fmt.Errorf("invalid params")
+			}
+			overrides[address] = ethereum.OverrideAccount{
+				Balance:   (*big.Int)(account.Balance),
+				Nonce:     uint64(account.Nonce),
+				Code:      account.Code,
+				State:     account.State,
+				StateDiff: account.StateDiff,
+			}
+		}
+		msg := map[string]interface{}{
+			"from":  common.HexToAddress(request.From),
+			"to":    common.HexToAddress(request.To),
+			"value": (*hexutil.Big)(value),
+		}
+		if len(data) > 0 {
+			msg["input"] = hexutil.Bytes(data)
+		}
+		var result hexutil.Bytes
+		err = h.rpc.CallContext(ctx, &result, "eth_call", msg, "latest", overrides)
 		if err != nil {
 			return "", err
 		}
