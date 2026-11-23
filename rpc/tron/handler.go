@@ -22,11 +22,12 @@ type Handler struct {
 	rpc *httpc.Request
 }
 
-func NewHandler(rpcUrl string) (*Handler, error) {
-	h := &Handler{}
-
-	h.rpc = httpc.NewRequest(rpcUrl, nil)
-	return h, nil
+func NewHandler(rpcUrl, apiKey string) (*Handler, error) {
+	headers := map[string]string{}
+	if apiKey != "" {
+		headers["TRON-PROAPI-KEY"] = apiKey
+	}
+	return &Handler{rpc: httpc.NewRequest(rpcUrl, headers)}, nil
 }
 
 func (h *Handler) GetHeight(ctx context.Context) (string, error) {
@@ -348,6 +349,36 @@ func (h *Handler) CallContract(ctx context.Context, contractAddress, params, blo
 
 func (h *Handler) InquireChain(ctx context.Context, instruction, params string) (string, error) {
 	switch instruction {
+	case "getblockbynum", "gettransactioninfobyblocknum":
+		blockNumber, err := strconv.ParseUint(params, 10, 63)
+		if err != nil {
+			return "", fmt.Errorf("invalid params: block number must be a nonnegative decimal int64")
+		}
+		var result json.RawMessage
+		if err := h.rpc.Post(ctx, &result, "wallet/"+instruction, map[string]uint64{"num": blockNumber}); err != nil {
+			return "", fmt.Errorf("failed to %s: %w", instruction, err)
+		}
+		if len(result) > 0 && result[0] == '{' {
+			var response struct {
+				Error       string    `json:"Error"`
+				BlockID     string    `json:"blockID"`
+				BlockHeader *struct{} `json:"block_header"`
+			}
+			if err := json.Unmarshal(result, &response); err != nil {
+				return "", fmt.Errorf("invalid %s response: %w", instruction, err)
+			}
+			if response.Error != "" {
+				return "", fmt.Errorf("failed to %s: %s", instruction, response.Error)
+			}
+			if instruction == "getblockbynum" && (response.BlockID == "" || response.BlockHeader == nil) {
+				return "", fmt.Errorf("block not found")
+			}
+		}
+		if len(result) == 0 || (instruction == "getblockbynum" && result[0] != '{') ||
+			(instruction == "gettransactioninfobyblocknum" && result[0] != '[') {
+			return "", fmt.Errorf("invalid %s response", instruction)
+		}
+		return string(result), nil
 	case "isTxExisted":
 		req := &GetTransactionInfoByIdReq{Value: params}
 		res := &Tx{}

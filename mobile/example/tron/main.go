@@ -32,7 +32,7 @@ func main() {
 	amount := "1"
 	fmt.Println("1. address from mnemonic:", sender)
 
-	h, err := tronrpc.NewHandler(rpcURL)
+	h, err := tronrpc.NewHandler(rpcURL, "")
 	if err != nil {
 		log.Fatalf("rpc handler: %v", err)
 	}
