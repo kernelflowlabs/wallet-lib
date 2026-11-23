@@ -16,10 +16,13 @@ func TestHandlerAPIKey(t *testing.T) {
 	for _, key := range []string{"", "test-tron-key"} {
 		t.Run(key, func(t *testing.T) {
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.Header.Get("TRON-PROAPI-KEY") != key {
+				if r.Header.Get("TRON-PROAPI-KEY") != "" {
+					t.Error("obsolete header must not be sent")
+				}
+				if r.Header.Get("TRON-PRO-API-KEY") != key {
 					t.Error("unexpected API key header")
 				}
-				if key == "" && len(r.Header.Values("TRON-PROAPI-KEY")) != 0 {
+				if key == "" && len(r.Header.Values("TRON-PRO-API-KEY")) != 0 {
 					t.Error("empty key header must be omitted")
 				}
 				if r.URL.Path != "/wallet/getnowblock" {
@@ -52,7 +55,7 @@ func TestInquireBlockQueries(t *testing.T) {
 				if r.Method != http.MethodPost || r.URL.Path != "/wallet/"+tc.instruction {
 					t.Errorf("request=%s %s", r.Method, r.URL.Path)
 				}
-				if r.Header.Get("TRON-PROAPI-KEY") != "test-tron-key" {
+				if r.Header.Get("TRON-PRO-API-KEY") != "test-tron-key" {
 					t.Error("missing API key")
 				}
 				var body map[string]json.RawMessage

@@ -22,25 +22,72 @@ type Handler struct {
 	rpc *httpc.Request
 }
 
-func NewHandler(rpcUrl, apiKey string) (*Handler, error) {
+func NewHandler(rpcUrl, apiKey string, options ...httpc.Option) (*Handler, error) {
 	headers := map[string]string{}
 	if apiKey != "" {
-		headers["TRON-PROAPI-KEY"] = apiKey
+		headers["TRON-PRO-API-KEY"] = apiKey
 	}
-	return &Handler{rpc: httpc.NewRequest(rpcUrl, headers)}, nil
+	client, err := httpc.NewRequestWithOptions(rpcUrl, headers, options...)
+	if err != nil {
+		return nil, err
+	}
+	return &Handler{rpc: client}, nil
 }
 
 func (h *Handler) GetHeight(ctx context.Context) (string, error) {
 	block := &Block{}
 	err := h.rpc.Post(ctx, block, "wallet/getnowblock", nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to get latest block, err=%v", err)
+		return "", fmt.Errorf("failed to get latest block, err=%w", err)
 	}
 	height := block.BlockHeader.Data.Number
 	if height == 0 {
 		return "", fmt.Errorf("got zero")
 	}
 	return strconv.FormatUint(height, 10), nil
+}
+
+func (h *Handler) GetSolidifiedHeight(ctx context.Context) (string, error) {
+	result, err := h.queryJSON(ctx, "walletsolidity/getnowblock", nil, '{')
+	if err != nil {
+		return "", err
+	}
+	var block struct {
+		BlockHeader *struct {
+			Data *struct {
+				Number *uint64 `json:"number"`
+			} `json:"raw_data"`
+		} `json:"block_header"`
+	}
+	if err := json.Unmarshal(result, &block); err != nil {
+		return "", fmt.Errorf("invalid solidified block: %w", err)
+	}
+	if block.BlockHeader == nil || block.BlockHeader.Data == nil || block.BlockHeader.Data.Number == nil {
+		return "", fmt.Errorf("solidified block height missing")
+	}
+	return strconv.FormatUint(*block.BlockHeader.Data.Number, 10), nil
+}
+
+func (h *Handler) queryJSON(ctx context.Context, path string, body interface{}, shape byte) (json.RawMessage, error) {
+	var result json.RawMessage
+	if err := h.rpc.Post(ctx, &result, path, body); err != nil {
+		return nil, fmt.Errorf("failed to %s: %w", path, err)
+	}
+	if len(result) > 0 && result[0] == '{' {
+		var response struct {
+			Error string `json:"Error"`
+		}
+		if err := json.Unmarshal(result, &response); err != nil {
+			return nil, fmt.Errorf("invalid %s response: %w", path, err)
+		}
+		if response.Error != "" {
+			return nil, fmt.Errorf("failed to %s: %s", path, response.Error)
+		}
+	}
+	if len(result) == 0 || result[0] != shape {
+		return nil, fmt.Errorf("invalid %s response", path)
+	}
+	return result, nil
 }
 
 func (h *Handler) GetBalance(ctx context.Context, address, contractAddress, blockNumber string) (string, error) {
@@ -354,29 +401,85 @@ func (h *Handler) InquireChain(ctx context.Context, instruction, params string) 
 		if err != nil {
 			return "", fmt.Errorf("invalid params: block number must be a nonnegative decimal int64")
 		}
-		var result json.RawMessage
-		if err := h.rpc.Post(ctx, &result, "wallet/"+instruction, map[string]uint64{"num": blockNumber}); err != nil {
-			return "", fmt.Errorf("failed to %s: %w", instruction, err)
+		shape := byte('{')
+		if instruction == "gettransactioninfobyblocknum" {
+			shape = '['
 		}
-		if len(result) > 0 && result[0] == '{' {
-			var response struct {
-				Error       string    `json:"Error"`
+		result, err := h.queryJSON(ctx, "wallet/"+instruction, map[string]uint64{"num": blockNumber}, shape)
+		if err != nil {
+			return "", err
+		}
+		if instruction == "getblockbynum" {
+			var block struct {
 				BlockID     string    `json:"blockID"`
 				BlockHeader *struct{} `json:"block_header"`
 			}
-			if err := json.Unmarshal(result, &response); err != nil {
-				return "", fmt.Errorf("invalid %s response: %w", instruction, err)
+			if err := json.Unmarshal(result, &block); err != nil {
+				return "", fmt.Errorf("invalid block: %w", err)
 			}
-			if response.Error != "" {
-				return "", fmt.Errorf("failed to %s: %s", instruction, response.Error)
-			}
-			if instruction == "getblockbynum" && (response.BlockID == "" || response.BlockHeader == nil) {
+			if block.BlockID == "" || block.BlockHeader == nil {
 				return "", fmt.Errorf("block not found")
 			}
 		}
-		if len(result) == 0 || (instruction == "getblockbynum" && result[0] != '{') ||
-			(instruction == "gettransactioninfobyblocknum" && result[0] != '[') {
-			return "", fmt.Errorf("invalid %s response", instruction)
+		return string(result), nil
+	case "getSolidifiedHeight":
+		return h.GetSolidifiedHeight(ctx)
+	case "getSolidifiedTransactionInfoById":
+		hash, err := hex.DecodeString(params)
+		if err != nil || len(hash) != 32 {
+			return "", fmt.Errorf("invalid params: transaction ID must be 32 bytes of hex without a prefix")
+		}
+		result, err := h.queryJSON(ctx, "walletsolidity/gettransactioninfobyid", GetTransactionInfoByIdReq{Value: params}, '{')
+		if err != nil {
+			return "", err
+		}
+		var receipt struct {
+			ID string `json:"id"`
+		}
+		if err := json.Unmarshal(result, &receipt); err != nil {
+			return "", fmt.Errorf("invalid solidified receipt: %w", err)
+		}
+		if receipt.ID == "" {
+			return "", fmt.Errorf("solidified transaction not found")
+		}
+		if !strings.EqualFold(receipt.ID, params) {
+			return "", fmt.Errorf("solidified transaction ID mismatch")
+		}
+		return string(result), nil
+	case "getblockbylimitnext":
+		var request struct {
+			StartNum *uint64 `json:"startNum"`
+			EndNum   *uint64 `json:"endNum"`
+		}
+		if err := json.Unmarshal([]byte(params), &request); err != nil || request.StartNum == nil || request.EndNum == nil ||
+			*request.StartNum >= *request.EndNum || *request.EndNum > uint64(1<<63-1) {
+			return "", fmt.Errorf("invalid params: require 0 <= startNum < endNum <= int64 max")
+		}
+		result, err := h.queryJSON(ctx, "wallet/getblockbylimitnext", request, '{')
+		if err != nil {
+			return "", err
+		}
+		var response struct {
+			Blocks []struct {
+				ID     string `json:"blockID"`
+				Header *struct {
+					Data *struct {
+						Number *uint64 `json:"number"`
+					} `json:"raw_data"`
+				} `json:"block_header"`
+			} `json:"block"`
+		}
+		if err := json.Unmarshal(result, &response); err != nil {
+			return "", fmt.Errorf("invalid block range: %w", err)
+		}
+		if uint64(len(response.Blocks)) != *request.EndNum-*request.StartNum {
+			return "", fmt.Errorf("incomplete block range")
+		}
+		for i, block := range response.Blocks {
+			if block.ID == "" || block.Header == nil || block.Header.Data == nil || block.Header.Data.Number == nil ||
+				*block.Header.Data.Number != *request.StartNum+uint64(i) {
+				return "", fmt.Errorf("invalid block at height %d", *request.StartNum+uint64(i))
+			}
 		}
 		return string(result), nil
 	case "isTxExisted":
